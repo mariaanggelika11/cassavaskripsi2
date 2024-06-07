@@ -15,69 +15,47 @@ function generateRandomString(length) {
   return result;
 }
 
-// Definisi model Pabrik
-const Pabrik = db.define(
-  "data_pabrik", // Nama tabel di database
+// Definisi model DataPerusahaan
+const DataPerusahaan = db.define(
+  "data_perusahaan", // Nama tabel di database
   {
-    tanggalPenerimaan: {
+    tanggalupdateharga: {
       type: DataTypes.DATEONLY, // Tipe data tanggal (hanya tanggal, tanpa waktu)
       allowNull: false, // Tidak boleh null
       validate: {
         notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
       },
     },
-    idPengiriman: {
+    idharga: {
       type: DataTypes.STRING,
-      defaultValue: () => `PBK-${generateRandomString(6)}`, // Menghasilkan ID pengiriman acak dengan prefix 'PBK-'
+      defaultValue: () => `PRS-${generateRandomString(6)}`, // Menghasilkan ID harga acak dengan prefix 'PRS-'
       allowNull: false,
       validate: {
         notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
       },
     },
-    beratTotalDiterima: {
+    hargaGradeA: {
       type: DataTypes.FLOAT, // Tipe data float (angka desimal)
       allowNull: false,
       validate: {
         notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
       },
     },
-    evaluasiKualitas: {
-      type: DataTypes.STRING, // Misal: 'Baik', 'Cukup', 'Kurang'
-      allowNull: false,
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
-      },
-    },
-    catatanKualitas: {
-      type: DataTypes.TEXT, // Tipe data teks (panjang)
-      allowNull: true, // Boleh kosong
-    },
-    kapasitasProduksi: {
+    hargaGradeB: {
       type: DataTypes.FLOAT, // Tipe data float (angka desimal)
       allowNull: false,
       validate: {
         notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
       },
     },
-    produksiHarianTapioka: {
+    hargaGradeC: {
       type: DataTypes.FLOAT, // Tipe data float (angka desimal)
       allowNull: false,
       validate: {
         notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
       },
     },
-    kualitasOutput: {
-      type: DataTypes.STRING, // Misal: 'Standard', 'Premium'
-      allowNull: false,
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
-      },
-    },
-    permasalahanOperasional: {
-      type: DataTypes.TEXT, // Tipe data teks (panjang)
-      allowNull: true, // Boleh kosong
-    },
-    kebutuhanPerbaikan: {
+    catatan: {
       type: DataTypes.TEXT, // Tipe data teks (panjang)
       allowNull: true, // Boleh kosong
     },
@@ -87,8 +65,8 @@ const Pabrik = db.define(
   }
 );
 
-// Membuat relasi antara Users dan Pabrik
-Users.hasMany(Pabrik); // User memiliki banyak data pabrik
-Pabrik.belongsTo(Users, { foreignKey: "userId" }); // Data pabrik milik satu user, dengan userId sebagai foreign key
+// Membuat relasi antara Users dan DataPerusahaan
+Users.hasMany(DataPerusahaan); // User memiliki banyak data perusahaan
+DataPerusahaan.belongsTo(Users, { foreignKey: "userId" }); // Data perusahaan milik satu user, dengan userId sebagai foreign key
 
-export default Pabrik; // Mengekspor model Pabrik agar bisa digunakan di bagian lain dari aplikasi
+export default DataPerusahaan; // Mengekspor model DataPerusahaan agar bisa digunakan di bagian lain dari aplikasi

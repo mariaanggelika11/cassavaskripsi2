@@ -5,22 +5,22 @@ const { DataTypes } = Sequelize; // Mendestrukturisasi DataTypes dari Sequelize
 
 // Fungsi untuk menghasilkan string acak dengan panjang tertentu
 function generateRandomString(length) {
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-  const charactersLength = characters.length;
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"; // Karakter yang digunakan untuk string acak
+  let result = ""; // Inisialisasi hasil sebagai string kosong
+  const charactersLength = characters.length; // Panjang dari karakter yang tersedia
   for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    result += characters.charAt(Math.floor(Math.random() * charactersLength)); // Menambahkan karakter acak ke hasil
   }
-  return result;
+  return result; // Mengembalikan hasil
 }
 
-// Mendefinisikan model Users
-const Users = db.define(
-  "users", // Nama tabel di database
+// Definisi model PerusahaanUsers
+const PerusahaanUsers = db.define(
+  "perusahaanusers", // Nama tabel di database
   {
     uuid: {
       type: DataTypes.STRING, // Tipe data string
-      defaultValue: () => `USR-${generateRandomString(6)}`, // Menggunakan fungsi untuk menambahkan 'USR-' diikuti oleh string acak
+      defaultValue: () => `PBR-${generateRandomString(6)}`, // Menggunakan fungsi untuk menambahkan 'PBR-' diikuti oleh string acak
       allowNull: false, // Tidak boleh null
       validate: {
         notEmpty: true, // Validasi bahwa kolom ini tidak boleh kosong
@@ -42,14 +42,19 @@ const Users = db.define(
         isEmail: true, // Validasi bahwa kolom ini harus berupa email yang valid
       },
     },
-    password: {
+    nohp: {
       type: DataTypes.STRING, // Tipe data string
-      allowNull: false, // Tidak boleh null
-      validate: {
-        notEmpty: true, // Validasi bahwa kolom ini tidak boleh kosong
-      },
     },
-    role: {
+    alamat: {
+      type: DataTypes.STRING, // Tipe data string
+    },
+    foto: {
+      type: DataTypes.STRING, // Tipe data string
+    },
+    url: {
+      type: DataTypes.STRING, // Tipe data string
+    },
+    password: {
       type: DataTypes.STRING, // Tipe data string
       allowNull: false, // Tidak boleh null
       validate: {
@@ -62,5 +67,5 @@ const Users = db.define(
   }
 );
 
-// Mengekspor model Users agar bisa digunakan di bagian lain dari aplikasi
-export default Users;
+// Mengekspor model PerusahaanUsers agar bisa digunakan di bagian lain dari aplikasi
+export default PerusahaanUsers;
