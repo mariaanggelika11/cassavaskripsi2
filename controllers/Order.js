@@ -1,14 +1,16 @@
-import Product from "../models/OrderPemanenModel.js";
-import User from "../models/UserModel.js";
-import { Op } from "sequelize";
-import OrderHistory from "../models/OrderHistory.js";
+// controllers/productController.js
 
-// Mendapatkan semua produk
+import Product from "../models/ProductModel.js"; // Import model Product
+import User from "../models/UserModel.js"; // Import model User
+import OrderHistory from "../models/OrderHistory.js"; // Import model OrderHistory
+import { Op } from "sequelize"; // Import operator Sequelize
+
+// Controller untuk mendapatkan semua produk
 export const getProducts = async (req, res) => {
   try {
     let response;
+    // Jika role pengguna termasuk admin, perusahaan, logistik, atau pabrik
     if (["admin", "perusahaan", "logistik", "pabrik"].includes(req.role)) {
-      // Admin, perusahaan, logistik, dan pabrik bisa melihat semua produk dengan detail tambahan
       response = await Product.findAll({
         attributes: ["uuid", "tanggalPemanenan", "statusOrder", "varietasSingkong", "estimasiBerat", "estimasiHarga", "userId", "namaLogistik", "noHpLogistik", "platnoLogistik", "namaPerusahaan", "noHpPerusahaan"],
         include: [
@@ -19,7 +21,7 @@ export const getProducts = async (req, res) => {
         ],
       });
     } else {
-      // Pengguna lain hanya bisa melihat produk yang mereka buat dengan informasi terbatas
+      // Jika role pengguna bukan admin, perusahaan, logistik, atau pabrik
       response = await Product.findAll({
         attributes: ["uuid", "tanggalPemanenan", "statusOrder", "varietasSingkong", "estimasiBerat", "estimasiHarga", "namaLogistik", "noHpLogistik", "platnoLogistik", "namaPerusahaan", "noHpPerusahaan"],
         where: {
@@ -33,13 +35,13 @@ export const getProducts = async (req, res) => {
         ],
       });
     }
-    res.status(200).json(response);
+    res.status(200).json(response); // Kirim respons dengan produk yang didapat
   } catch (error) {
-    res.status(500).json({ msg: error.message });
+    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
   }
 };
 
-// Mendapatkan produk berdasarkan ID
+// Controller untuk mendapatkan produk berdasarkan ID
 export const getProductById = async (req, res) => {
   try {
     const product = await Product.findOne({
@@ -47,11 +49,11 @@ export const getProductById = async (req, res) => {
         uuid: req.params.id,
       },
     });
-    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" });
+    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" }); // Kirim respons jika produk tidak ditemukan
 
     let response;
+    // Jika role pengguna termasuk admin, perusahaan, pabrik, atau logistik
     if (["admin", "perusahaan", "pabrik", "logistik"].includes(req.role)) {
-      // Admin, pabrik, dan logistik bisa melihat semua detail produk
       response = await Product.findOne({
         attributes: ["uuid", "tanggalPemanenan", "statusOrder", "varietasSingkong", "estimasiBerat", "estimasiHarga", "userId", "namaLogistik", "noHpLogistik", "platnoLogistik", "namaPerusahaan", "noHpPerusahaan"],
         where: {
@@ -65,7 +67,7 @@ export const getProductById = async (req, res) => {
         ],
       });
     } else {
-      // Pengguna lain hanya bisa melihat detail terbatas dari produk yang mereka buat
+      // Jika role pengguna bukan admin, perusahaan, pabrik, atau logistik
       response = await Product.findOne({
         attributes: ["uuid", "tanggalPemanenan", "statusOrder", "varietasSingkong", "estimasiBerat", "estimasiHarga", "noHpLogistik"],
         where: {
@@ -79,14 +81,14 @@ export const getProductById = async (req, res) => {
         ],
       });
     }
-    if (!response) return res.status(404).json({ msg: "Produk tidak ditemukan atau tidak dapat diakses" });
-    res.status(200).json(response);
+    if (!response) return res.status(404).json({ msg: "Produk tidak ditemukan atau tidak dapat diakses" }); // Kirim respons jika produk tidak ditemukan atau tidak dapat diakses
+    res.status(200).json(response); // Kirim respons dengan produk yang didapat
   } catch (error) {
-    res.status(500).json({ msg: error.message });
+    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
   }
 };
 
-// Membuat produk baru
+// Controller untuk membuat produk baru
 export const createProduct = async (req, res) => {
   const { tanggalPemanenan, statusOrder, varietasSingkong, estimasiBerat, estimasiHarga, noHpLogistik } = req.body;
   try {
@@ -99,13 +101,13 @@ export const createProduct = async (req, res) => {
       noHpLogistik,
       userId: req.userId, // Asumsikan req.userId sudah diisi melalui middleware autentikasi
     });
-    res.status(201).json({ msg: "Order Pemanenan Created Successfully" });
+    res.status(201).json({ msg: "Order Pemanenan Created Successfully" }); // Kirim respons berhasil
   } catch (error) {
-    res.status(500).json({ msg: error.message });
+    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
   }
 };
 
-// Memperbarui produk
+// Controller untuk memperbarui produk
 export const updateProduct = async (req, res) => {
   try {
     const product = await Product.findOne({
@@ -113,7 +115,7 @@ export const updateProduct = async (req, res) => {
         uuid: req.params.id,
       },
     });
-    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" });
+    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" }); // Kirim respons jika produk tidak ditemukan
 
     // Data baru yang akan diperbarui
     const { namaLogistik, noHpLogistik, platnoLogistik, namaPerusahaan, noHpPerusahaan, statusOrder, beratSingkong, beratBatang, beratDaun } = req.body;
@@ -151,17 +153,17 @@ export const updateProduct = async (req, res) => {
         });
       }
 
-      res.status(200).json({ msg: "Produk berhasil diperbarui" });
+      res.status(200).json({ msg: "Produk berhasil diperbarui" }); // Kirim respons berhasil
     } else {
       // Jika pengguna bukan bagian dari role yang diperbolehkan
-      return res.status(403).json({ msg: "Akses terlarang" });
+      return res.status(403).json({ msg: "Akses terlarang" }); // Kirim respons akses terlarang
     }
   } catch (error) {
-    res.status(500).json({ msg: error.message });
+    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
   }
 };
 
-// Menghapus produk
+// Controller untuk menghapus produk
 export const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findOne({
@@ -169,11 +171,11 @@ export const deleteProduct = async (req, res) => {
         uuid: req.params.id,
       },
     });
-    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" });
+    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" }); // Kirim respons jika produk tidak ditemukan
 
     // Hanya admin yang dapat menghapus produk
     if (req.role !== "admin") {
-      return res.status(403).json({ msg: "Akses terlarang" });
+      return res.status(403).json({ msg: "Akses terlarang" }); // Kirim respons akses terlarang
     }
 
     await Product.destroy({
@@ -182,13 +184,13 @@ export const deleteProduct = async (req, res) => {
       },
     });
 
-    res.status(200).json({ msg: "Produk berhasil dihapus" });
+    res.status(200).json({ msg: "Produk berhasil dihapus" }); // Kirim respons berhasil
   } catch (error) {
-    res.status(500).json({ msg: error.message });
+    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
   }
 };
 
-// Fungsi untuk perusahaan menyetujui order
+// Controller untuk menyetujui order oleh perusahaan
 export const approveOrder = async (req, res) => {
   try {
     const product = await Product.findOne({
@@ -196,20 +198,20 @@ export const approveOrder = async (req, res) => {
         uuid: req.params.id,
       },
     });
-    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" });
+    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" }); // Kirim respons jika produk tidak ditemukan
 
     if (req.role === "perusahaan") {
       await Product.update({ statusOrder: "menunggu dipanen" }, { where: { id: product.id } });
-      res.status(200).json({ msg: "Order disetujui, menunggu dipanen" });
+      res.status(200).json({ msg: "Order disetujui, menunggu dipanen" }); // Kirim respons berhasil
     } else {
-      res.status(403).json({ msg: "Akses terlarang" });
+      res.status(403).json({ msg: "Akses terlarang" }); // Kirim respons akses terlarang
     }
   } catch (error) {
-    res.status(500).json({ msg: error.message });
+    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
   }
 };
 
-// Fungsi untuk logistik memulai keberangkatan
+// Controller untuk memulai keberangkatan oleh logistik
 export const startDeparture = async (req, res) => {
   try {
     const product = await Product.findOne({
@@ -217,20 +219,20 @@ export const startDeparture = async (req, res) => {
         uuid: req.params.id,
       },
     });
-    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" });
+    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" }); // Kirim respons jika produk tidak ditemukan
 
     if (req.role === "logistik") {
       await Product.update({ statusOrder: "menuju pabrik" }, { where: { id: product.id } });
-      res.status(200).json({ msg: "Keberangkatan dimulai, menuju pabrik" });
+      res.status(200).json({ msg: "Keberangkatan dimulai, menuju pabrik" }); // Kirim respons berhasil
     } else {
-      res.status(403).json({ msg: "Akses terlarang" });
+      res.status(403).json({ msg: "Akses terlarang" }); // Kirim respons akses terlarang
     }
   } catch (error) {
-    res.status(500).json({ msg: error.message });
+    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
   }
 };
 
-// Fungsi untuk logistik menyelesaikan keberangkatan dengan data tambahan
+// Controller untuk menyelesaikan keberangkatan oleh logistik
 export const completeDeparture = async (req, res) => {
   const { beratSingkong, beratBatang, beratDaun } = req.body;
   try {
@@ -239,7 +241,7 @@ export const completeDeparture = async (req, res) => {
         uuid: req.params.id,
       },
     });
-    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" });
+    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" }); // Kirim respons jika produk tidak ditemukan
 
     if (req.role === "logistik") {
       await Product.update(
@@ -253,16 +255,16 @@ export const completeDeparture = async (req, res) => {
       );
 
       // Meminta perusahaan untuk mengisi harga aktual
-      res.status(200).json({ msg: "Keberangkatan selesai, data berat diperbarui. Mohon perusahaan untuk mengisi harga aktual dan menampilkan berat." });
+      res.status(200).json({ msg: "Keberangkatan selesai, data berat diperbarui. Mohon perusahaan untuk mengisi harga aktual dan menampilkan berat." }); // Kirim respons berhasil
     } else {
-      res.status(403).json({ msg: "Akses terlarang" });
+      res.status(403).json({ msg: "Akses terlarang" }); // Kirim respons akses terlarang
     }
   } catch (error) {
-    res.status(500).json({ msg: error.message });
+    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
   }
 };
 
-// Fungsi untuk memproses order di pabrik
+// Controller untuk memproses order di pabrik
 export const processAtFactory = async (req, res) => {
   try {
     const product = await Product.findOne({
@@ -270,26 +272,26 @@ export const processAtFactory = async (req, res) => {
         uuid: req.params.id,
       },
     });
-    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" });
+    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" }); // Kirim respons jika produk tidak ditemukan
 
     if (req.role === "pabrik") {
       await Product.update({ statusOrder: "diproses pabrik" }, { where: { id: product.id } });
-      res.status(200).json({ msg: "Proses di pabrik dimulai" });
+      res.status(200).json({ msg: "Proses di pabrik dimulai" }); // Kirim respons berhasil
     } else {
-      res.status(403).json({ msg: "Akses terlarang" });
+      res.status(403).json({ msg: "Akses terlarang" }); // Kirim respons akses terlarang
     }
   } catch (error) {
-    res.status(500).json({ msg: error.message });
+    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
   }
 };
 
-// Endpoint untuk perusahaan mengisi harga aktual dan menampilkan berat yang sudah diperbarui
+// Controller untuk mengupdate harga dan menampilkan berat oleh perusahaan
 export const updatePriceAndDisplayWeight = async (req, res) => {
   const { productId, hargaAktual } = req.body;
   try {
     // Cek apakah pengguna memiliki peran perusahaan
     if (req.role !== "perusahaan") {
-      return res.status(403).json({ msg: "Akses terlarang" });
+      return res.status(403).json({ msg: "Akses terlarang" }); // Kirim respons akses terlarang jika pengguna bukan perusahaan
     }
 
     // Temukan produk berdasarkan ID
@@ -299,70 +301,26 @@ export const updatePriceAndDisplayWeight = async (req, res) => {
       },
     });
 
-    // Jika produk tidak ditemukan
+    // Kirim respons jika produk tidak ditemukan
     if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" });
 
-    // Update harga aktual dan status pesanan menjadi 'menunggu diproses'
+    // Update harga aktual dan status order
     await Product.update(
       {
-        hargaAktual,
-        statusOrder: "menunggu diproses",
+        hargaAktual: hargaAktual,
+        statusOrder: "selesai",
       },
-      { where: { id: product.id } }
+      {
+        where: {
+          id: product.id,
+        },
+      }
     );
 
-    // Mengembalikan respons dengan berat yang diperbarui dan harga aktual
-    res.status(200).json({
-      msg: "Harga aktual berhasil disimpan, berikut adalah berat yang diperbarui:",
-      beratSingkong: product.beratSingkong,
-      beratBatang: product.beratBatang,
-      beratDaun: product.beratDaun,
-      hargaAktual: product.hargaAktual,
-    });
+    // Kirim respons berhasil
+    res.status(200).json({ msg: "Harga aktual telah diupdate, produk selesai diproses" });
   } catch (error) {
-    res.status(500).json({ msg: error.message });
-  }
-};
-
-// Fungsi untuk membuat entri baru di OrderHistory
-export const createOrderHistoryEntry = async (orderId, userId, statusOrder, namaLogistik, namaPabrik) => {
-  try {
-    const orderHistory = await OrderHistory.create({
-      orderId,
-      userId,
-      statusOrder,
-      namaLogistik,
-      namaPabrik,
-      // Tambahkan kolom lain sesuai kebutuhan
-    });
-    return orderHistory;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
-// Fungsi untuk menyelesaikan proses order
-export const completeProcessing = async (req, res) => {
-  try {
-    const product = await Product.findOne({
-      where: {
-        uuid: req.params.id,
-      },
-    });
-    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" });
-
-    if (["admin", "pabrik"].includes(req.role)) {
-      // Update status pesanan menjadi 'selesai'
-      await Product.update({ statusOrder: "selesai" }, { where: { id: product.id } });
-
-      // Tambahkan entri baru ke OrderHistory
-      await createOrderHistoryEntry(product.id, req.userId, "selesai", product.namaLogistik, product.namaPerusahaan);
-
-      res.status(200).json({ msg: "Proses selesai, history order telah ditambahkan" });
-    } else {
-      res.status(403).json({ msg: "Akses terlarang" });
-    }
-  } catch (error) {
+    // Kirim respons error jika terjadi kesalahan server
     res.status(500).json({ msg: error.message });
   }
 };

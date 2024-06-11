@@ -3,7 +3,7 @@ import argon2 from "argon2";
 import PetaniUsers from "../models/PetaniUserModel.js";
 import LogisticUser from "../models/LogisticUserModel.js";
 import PabrikUser from "../models/PabrikUserModel.js";
-import PerusahaanUsers from "../models/PerusahaanUserModel.js"; // Tambahkan ini
+import PerusahaanUser from "../models/PerusahaanUserModel.js"; // Tambahkan ini
 import fs from "fs/promises";
 import path from "path";
 
@@ -48,9 +48,9 @@ export const deleteUser = async (req, res) => {
         await PabrikUser.destroy({ where: { uuid: user.uuid } });
         break;
       case "perusahaan": // Tambahkan ini
-        const perusahaan = await PerusahaanUsers.findOne({ where: { uuid: user.uuid } });
+        const perusahaan = await PerusahaanUser.findOne({ where: { uuid: user.uuid } });
         fotoFilename = perusahaan?.foto;
-        await PerusahaanUsers.destroy({ where: { uuid: user.uuid } });
+        await PerusahaanUser.destroy({ where: { uuid: user.uuid } });
         break;
       default:
         console.log("Role pengguna tidak dikenali, tidak ada foto untuk dihapus.");
@@ -108,7 +108,7 @@ export const createUser = async (req, res) => {
         await PabrikUser.create(userDetails);
         break;
       case "perusahaan": // Tambahkan ini
-        await PerusahaanUsers.create(userDetails);
+        await PerusahaanUser.create(userDetails);
         break;
     }
 
@@ -158,7 +158,7 @@ export const getUserById = async (req, res) => {
         userDetails.additionalInfo = await PabrikUser.findOne({ where: { uuid: user.uuid } });
         break;
       case "perusahaan": // Tambahkan ini
-        userDetails.additionalInfo = await PerusahaanUsers.findOne({ where: { uuid: user.uuid } });
+        userDetails.additionalInfo = await PerusahaanUser.findOne({ where: { uuid: user.uuid } });
         break;
     }
 
@@ -225,7 +225,7 @@ export const updateUser = async (req, res) => {
         await PabrikUser.update(updateDetails, { where: { uuid } });
         break;
       case "perusahaan": // Tambahkan ini
-        await PerusahaanUsers.update(updateDetails, { where: { uuid } });
+        await PerusahaanUser.update(updateDetails, { where: { uuid } });
         break;
       default:
         console.log("Role pengguna tidak dikenali, update detail pengguna tidak dilakukan.");

@@ -15,12 +15,12 @@ function generateRandomString(length) {
 }
 
 // Definisi model PerusahaanUsers
-const PerusahaanUsers = db.define(
+const PerusahaanUser = db.define(
   "perusahaanusers", // Nama tabel di database
   {
     uuid: {
       type: DataTypes.STRING, // Tipe data string
-      defaultValue: () => `PBR-${generateRandomString(6)}`, // Menggunakan fungsi untuk menambahkan 'PBR-' diikuti oleh string acak
+      defaultValue: () => `PRN-${generateRandomString(6)}`, // Menggunakan fungsi untuk menambahkan 'PBR-' diikuti oleh string acak
       allowNull: false, // Tidak boleh null
       validate: {
         notEmpty: true, // Validasi bahwa kolom ini tidak boleh kosong
@@ -68,4 +68,4 @@ const PerusahaanUsers = db.define(
 );
 
 // Mengekspor model PerusahaanUsers agar bisa digunakan di bagian lain dari aplikasi
-export default PerusahaanUsers;
+export default PerusahaanUser;

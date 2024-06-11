@@ -16,7 +16,7 @@ function generateRandomString(length) {
 }
 
 // Definisi model DataPerusahaan
-const DataPerusahaan = db.define(
+const Perusahaan = db.define(
   "data_perusahaan", // Nama tabel di database
   {
     tanggalupdateharga: {
@@ -66,7 +66,7 @@ const DataPerusahaan = db.define(
 );
 
 // Membuat relasi antara Users dan DataPerusahaan
-Users.hasMany(DataPerusahaan); // User memiliki banyak data perusahaan
-DataPerusahaan.belongsTo(Users, { foreignKey: "userId" }); // Data perusahaan milik satu user, dengan userId sebagai foreign key
+Users.hasMany(Perusahaan); // User memiliki banyak data perusahaan
+Perusahaan.belongsTo(Users, { foreignKey: "userId" }); // Data perusahaan milik satu user, dengan userId sebagai foreign key
 
-export default DataPerusahaan; // Mengekspor model DataPerusahaan agar bisa digunakan di bagian lain dari aplikasi
+export default Perusahaan; // Mengekspor model DataPerusahaan agar bisa digunakan di bagian lain dari aplikasi
