@@ -324,3 +324,46 @@ export const updatePriceAndDisplayWeight = async (req, res) => {
     res.status(500).json({ msg: error.message });
   }
 };
+
+// Fungsi untuk membuat entri baru di OrderHistory
+export const createOrderHistoryEntry = async (orderId, userId, statusOrder, namaLogistik, namaPabrik) => {
+  try {
+    const orderHistory = await OrderHistory.create({
+      orderId,
+      userId,
+      statusOrder,
+      namaLogistik,
+      namaPabrik,
+      // Tambahkan kolom lain sesuai kebutuhan
+    });
+    return orderHistory;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+// Fungsi untuk menyelesaikan proses order
+export const completeProcessing = async (req, res) => {
+  try {
+    const product = await Product.findOne({
+      where: {
+        uuid: req.params.id,
+      },
+    });
+    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" });
+
+    if (["admin", "pabrik"].includes(req.role)) {
+      // Update status pesanan menjadi 'selesai'
+      await Product.update({ statusOrder: "selesai" }, { where: { id: product.id } });
+
+      // Tambahkan entri baru ke OrderHistory
+      await createOrderHistoryEntry(product.id, req.userId, "selesai", product.namaLogistik, product.namaPerusahaan);
+
+      res.status(200).json({ msg: "Proses selesai, history order telah ditambahkan" });
+    } else {
+      res.status(403).json({ msg: "Akses terlarang" });
+    }
+  } catch (error) {
+    res.status(500).json({ msg: error.message });
+  }
+};
