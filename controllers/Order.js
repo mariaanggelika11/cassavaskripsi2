@@ -1,6 +1,6 @@
 // controllers/productController.js
 
-import Product from "../models/ProductModel.js"; // Import model Product
+import Product from "../models/OrderPemanenModel.js";
 import User from "../models/UserModel.js"; // Import model User
 import OrderHistory from "../models/OrderHistory.js"; // Import model OrderHistory
 import { Op } from "sequelize"; // Import operator Sequelize

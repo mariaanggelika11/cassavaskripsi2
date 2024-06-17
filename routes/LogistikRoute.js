@@ -5,7 +5,7 @@ import { verifyUser } from "../middleware/AuthUser.js";
 const router = express.Router();
 
 // Route untuk mendapatkan semua data logistik
-router.get("C", verifyUser, getLogistik);
+router.get("/logistik", verifyUser, getLogistik);
 // Route untuk mendapatkan semua data logistik
 router.get("/logistik/:id", verifyUser, getLogistikById);
 // Route untuk membuat data logistik baru

@@ -1,6 +1,6 @@
 import express from "express";
 import { getPabrik, createPabrik, updatePabrik, deletePabrik, getPabrikById } from "../controllers/Pabrik.js"; // Pastikan path sesuai
-import { verifyUser } from "../middleware/AuthUser.js"; // Pastikan path sesuai
+import { verifyUser } from "../middleware/AuthUser.js";
 
 const router = express.Router();
 

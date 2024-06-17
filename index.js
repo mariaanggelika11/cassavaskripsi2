@@ -46,12 +46,27 @@ app.use(
   })
 );
 
+// app.use(
+//   cors({
+//     credentials: true,
+//     origin: ["http://localhost:8000", "*"],
+//   })
+// );
+
+// app.use(
+//   cors({
+//     origin: "*", // Mengizinkan semua origin
+//   })
+// );
+
 app.use(
   cors({
     credentials: true,
-    origin: "http://localhost:3000",
+    origin: ["https://cassava-telti.isi-net.org", "https://cassava-super.netlify.app", "*"], // Menentukan asal yang diizinkan
   })
 );
+
+
 app.use(express.json());
 app.use(UserRoute);
 app.use(OrderRoute);

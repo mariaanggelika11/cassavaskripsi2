@@ -1,9 +1,9 @@
 import User from "../models/UserModel.js";
-import argon2 from "argon2";
+import bcrypt from "bcrypt";
 import PetaniUsers from "../models/PetaniUserModel.js";
 import LogisticUser from "../models/LogisticUserModel.js";
 import PabrikUser from "../models/PabrikUserModel.js";
-import PerusahaanUser from "../models/PerusahaanUserModel.js"; // Tambahkan ini
+import PerusahaanUser from "../models/PerusahaanUserModel.js"; // Tambahkan ini jika diperlukan
 import fs from "fs/promises";
 import path from "path";
 
@@ -47,7 +47,7 @@ export const deleteUser = async (req, res) => {
         fotoFilename = pabrik?.foto;
         await PabrikUser.destroy({ where: { uuid: user.uuid } });
         break;
-      case "perusahaan": // Tambahkan ini
+      case "perusahaan":
         const perusahaan = await PerusahaanUser.findOne({ where: { uuid: user.uuid } });
         fotoFilename = perusahaan?.foto;
         await PerusahaanUser.destroy({ where: { uuid: user.uuid } });
@@ -78,11 +78,12 @@ export const createUser = async (req, res) => {
   }
 
   try {
-    const hashPassword = await argon2.hash(password);
+    const hashedPassword = await bcrypt.hash(password, 10); // Gunakan bcrypt untuk hash password
+
     const newUser = await User.create({
       name,
       email,
-      password: hashPassword,
+      password: hashedPassword,
       role,
     });
 
@@ -94,7 +95,7 @@ export const createUser = async (req, res) => {
       alamat: alamat || "",
       foto: foto, // Simpan nama file foto
       url: `${req.protocol}://${req.get("host")}/profile/${foto}`, // Simpan URL foto
-      password: hashPassword,
+      password: hashedPassword,
     };
 
     switch (role.toLowerCase()) {
@@ -107,7 +108,7 @@ export const createUser = async (req, res) => {
       case "pabrik":
         await PabrikUser.create(userDetails);
         break;
-      case "perusahaan": // Tambahkan ini
+      case "perusahaan":
         await PerusahaanUser.create(userDetails);
         break;
     }
@@ -157,7 +158,7 @@ export const getUserById = async (req, res) => {
       case "pabrik":
         userDetails.additionalInfo = await PabrikUser.findOne({ where: { uuid: user.uuid } });
         break;
-      case "perusahaan": // Tambahkan ini
+      case "perusahaan":
         userDetails.additionalInfo = await PerusahaanUser.findOne({ where: { uuid: user.uuid } });
         break;
     }
@@ -185,7 +186,7 @@ export const updateUser = async (req, res) => {
 
     let hashPassword = userToUpdate.password;
     if (password && password.trim() !== "") {
-      hashPassword = await argon2.hash(password);
+      hashPassword = await bcrypt.hash(password, 10); // Gunakan bcrypt untuk hash password
     }
 
     let foto = userToUpdate.foto;
@@ -224,7 +225,7 @@ export const updateUser = async (req, res) => {
       case "pabrik":
         await PabrikUser.update(updateDetails, { where: { uuid } });
         break;
-      case "perusahaan": // Tambahkan ini
+      case "perusahaan":
         await PerusahaanUser.update(updateDetails, { where: { uuid } });
         break;
       default:
