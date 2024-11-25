@@ -107,6 +107,7 @@ export const createProduct = async (req, res) => {
   }
 };
 
+
 // Controller untuk memperbarui produk
 export const updateProduct = async (req, res) => {
   try {
@@ -200,6 +201,11 @@ export const approveOrder = async (req, res) => {
     });
     if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" }); // Kirim respons jika produk tidak ditemukan
 
+    // Cek apakah status order sudah disetujui
+    if (product.statusOrder !== "pending") {
+      return res.status(400).json({ msg: "Order sudah disetujui atau tidak bisa diubah" }); // Kirim respons jika status tidak sesuai
+    }
+
     if (req.role === "perusahaan") {
       await Product.update({ statusOrder: "menunggu dipanen" }, { where: { id: product.id } });
       res.status(200).json({ msg: "Order disetujui, menunggu dipanen" }); // Kirim respons berhasil
@@ -220,6 +226,11 @@ export const startDeparture = async (req, res) => {
       },
     });
     if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" }); // Kirim respons jika produk tidak ditemukan
+
+    // Cek apakah status order sudah memulai keberangkatan
+    if (product.statusOrder !== "menunggu dipanen") {
+      return res.status(400).json({ msg: "Keberangkatan sudah dimulai atau tidak bisa diubah" }); // Kirim respons jika status tidak sesuai
+    }
 
     if (req.role === "logistik") {
       await Product.update({ statusOrder: "menuju pabrik" }, { where: { id: product.id } });
@@ -243,7 +254,15 @@ export const completeDeparture = async (req, res) => {
     });
     if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" }); // Kirim respons jika produk tidak ditemukan
 
+    // Cek apakah status order sudah menyelesaikan keberangkatan
+    if (product.statusOrder !== "menuju pabrik") {
+      return res.status(400).json({ msg: "Keberangkatan sudah selesai atau tidak bisa diubah" }); // Kirim respons jika status tidak sesuai
+    }
+
     if (req.role === "logistik") {
+      if (!beratSingkong || !beratBatang || !beratDaun) {
+        return res.status(400).json({ msg: "Berat Singkong, Batang, dan Daun harus diisi" });
+      }
       await Product.update(
         {
           statusOrder: "menunggu diproses",
@@ -254,7 +273,6 @@ export const completeDeparture = async (req, res) => {
         { where: { id: product.id } }
       );
 
-      // Meminta perusahaan untuk mengisi harga aktual
       res.status(200).json({ msg: "Keberangkatan selesai, data berat diperbarui. Mohon perusahaan untuk mengisi harga aktual dan menampilkan berat." }); // Kirim respons berhasil
     } else {
       res.status(403).json({ msg: "Akses terlarang" }); // Kirim respons akses terlarang
@@ -273,6 +291,11 @@ export const processAtFactory = async (req, res) => {
       },
     });
     if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" }); // Kirim respons jika produk tidak ditemukan
+
+    // Cek apakah status order sudah diproses di pabrik
+    if (product.statusOrder !== "menunggu diproses") {
+      return res.status(400).json({ msg: "Order sudah diproses atau tidak bisa diubah" }); // Kirim respons jika status tidak sesuai
+    }
 
     if (req.role === "pabrik") {
       await Product.update({ statusOrder: "diproses pabrik" }, { where: { id: product.id } });
@@ -303,6 +326,11 @@ export const updatePriceAndDisplayWeight = async (req, res) => {
 
     // Kirim respons jika produk tidak ditemukan
     if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" });
+
+    // Cek apakah status order sudah selesai
+    if (product.statusOrder !== "diproses pabrik") {
+      return res.status(400).json({ msg: "Order sudah selesai atau tidak bisa diubah" }); // Kirim respons jika status tidak sesuai
+    }
 
     // Update harga aktual dan status order
     await Product.update(
@@ -351,6 +379,11 @@ export const completeProcessing = async (req, res) => {
       },
     });
     if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" });
+
+    // Cek apakah status order sudah selesai
+    if (product.statusOrder !== "diproses pabrik") {
+      return res.status(400).json({ msg: "Order sudah selesai atau tidak bisa diubah" }); // Kirim respons jika status tidak sesuai
+    }
 
     if (["admin", "pabrik"].includes(req.role)) {
       // Update status pesanan menjadi 'selesai'

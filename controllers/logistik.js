@@ -1,5 +1,9 @@
 import Logistik from "../models/DataLogisticModel.js";
 import User from "../models/UserModel.js";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || "bbyifdrdd6r09u8fdxesesedtghbjkjkn";
+
 
 // Fungsi untuk mendapatkan data logistik berdasarkan peran pengguna
 export const getLogistik = async (req, res) => {

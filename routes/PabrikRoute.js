@@ -1,21 +1,18 @@
 import express from "express";
-import { getPabrik, createPabrik, updatePabrik, deletePabrik, getPabrikById } from "../controllers/Pabrik.js"; // Pastikan path sesuai
-import { verifyUser } from "../middleware/AuthUser.js";
+import { getPabrik, createPabrik, updatePabrik, deletePabrik, getPabrikById } from "../controllers/Pabrik.js";
+import { verifyToken } from "../middleware/AuthUser.js"; // Menggunakan verifyToken dari AuthUser.js
 
 const router = express.Router();
 
 // Route untuk mendapatkan semua data pabrik
-router.get("/pabrik", verifyUser, getPabrik);
-// Route untuk mendapatkan semua data pabrik
-router.get("/pabrik/:id", verifyUser, getPabrikById);
-
+router.get("/pabrik", verifyToken, getPabrik);
+// Route untuk mendapatkan data pabrik berdasarkan Id
+router.get("/pabrik/:id", verifyToken, getPabrikById);
 // Route untuk membuat data pabrik baru
-router.post("/pabrik", verifyUser, createPabrik);
-
+router.post("/pabrik", verifyToken, createPabrik);
 // Route untuk memperbarui data pabrik
-router.put("/pabrik/:id", verifyUser, updatePabrik);
-
+router.put("/pabrik/:id", verifyToken, updatePabrik);
 // Route untuk menghapus data pabrik
-router.delete("/pabrik/:id", verifyUser, deletePabrik);
+router.delete("/pabrik/:id", verifyToken, deletePabrik);
 
 export default router;

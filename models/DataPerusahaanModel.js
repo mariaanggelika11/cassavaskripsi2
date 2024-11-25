@@ -4,7 +4,7 @@ import Users from "./UserModel.js";
 
 const { DataTypes } = Sequelize;
 
-// Fungsi untuk menghasilkan string acak dengan panjang tertentu
+// Function to generate a random string of a certain length
 function generateRandomString(length) {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
@@ -15,58 +15,69 @@ function generateRandomString(length) {
   return result;
 }
 
-// Definisi model DataPerusahaan
+// Model definition for 'Perusahaan'
 const Perusahaan = db.define(
-  "data_perusahaan", // Nama tabel di database
+  "data_perusahaan", // Table name in the database
   {
     tanggalupdateharga: {
-      type: DataTypes.DATEONLY, // Tipe data tanggal (hanya tanggal, tanpa waktu)
-      allowNull: false, // Tidak boleh null
+      type: DataTypes.DATEONLY, // Date type (date only, no time)
+      allowNull: false, // Cannot be null
       validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
+        notEmpty: true, // Validation: cannot be empty
       },
     },
     idharga: {
       type: DataTypes.STRING,
-      defaultValue: () => `PRS-${generateRandomString(6)}`, // Menghasilkan ID harga acak dengan prefix 'PRS-'
+      defaultValue: () => `PRS-${generateRandomString(6)}`, // Generate a random price ID with prefix 'PRS-'
       allowNull: false,
       validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
+        notEmpty: true, // Validation: cannot be empty
       },
     },
+    // Grade A
     hargaGradeA: {
-      type: DataTypes.FLOAT, // Tipe data float (angka desimal)
+      type: DataTypes.FLOAT, // Float data type for price
       allowNull: false,
       validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
+        notEmpty: true, // Validation: cannot be empty
       },
     },
+    catatanGradeA: {
+      type: DataTypes.TEXT, // Text data type for notes related to Grade A
+      allowNull: true, // Notes can be null/empty
+    },
+    // Grade B
     hargaGradeB: {
-      type: DataTypes.FLOAT, // Tipe data float (angka desimal)
+      type: DataTypes.FLOAT, // Float data type for price
       allowNull: false,
       validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
+        notEmpty: true, // Validation: cannot be empty
       },
     },
+    catatanGradeB: {
+      type: DataTypes.TEXT, // Text data type for notes related to Grade B
+      allowNull: true, // Notes can be null/empty
+    },
+    // Grade C
     hargaGradeC: {
-      type: DataTypes.FLOAT, // Tipe data float (angka desimal)
+      type: DataTypes.FLOAT, // Float data type for price
       allowNull: false,
       validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
+        notEmpty: true, // Validation: cannot be empty
       },
     },
-    catatan: {
-      type: DataTypes.TEXT, // Tipe data teks (panjang)
-      allowNull: true, // Boleh kosong
+    catatanGradeC: {
+      type: DataTypes.TEXT, // Text data type for notes related to Grade C
+      allowNull: true, // Notes can be null/empty
     },
   },
   {
-    freezeTableName: true, // Nama tabel tidak akan diubah secara otomatis menjadi bentuk jamak oleh Sequelize
+    freezeTableName: true, // The table name won't be changed to plural automatically by Sequelize
   }
 );
 
-// Membuat relasi antara Users dan DataPerusahaan
-Users.hasMany(Perusahaan); // User memiliki banyak data perusahaan
-Perusahaan.belongsTo(Users, { foreignKey: "userId" }); // Data perusahaan milik satu user, dengan userId sebagai foreign key
+// Define relationship between Users and Perusahaan
+Users.hasMany(Perusahaan); // One user can have many 'Perusahaan' records
+Perusahaan.belongsTo(Users, { foreignKey: "userId" }); // Each 'Perusahaan' record belongs to a user (using 'userId' as the foreign key)
 
-export default Perusahaan; // Mengekspor model DataPerusahaan agar bisa digunakan di bagian lain dari aplikasi
+export default Perusahaan; // Export the model to be used in other parts of the application

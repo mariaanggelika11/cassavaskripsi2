@@ -1,43 +1,44 @@
 import express from "express";
 import { getProducts, getProductById, createProduct, updateProduct, deleteProduct, approveOrder, startDeparture, completeDeparture, processAtFactory, completeProcessing, updatePriceAndDisplayWeight } from "../controllers/Order.js";
-import { verifyUser } from "../middleware/AuthUser.js";
+import { verifyToken } from "../middleware/AuthUser.js"; // Menggunakan verifyToken dari AuthUser.js
 
 const router = express.Router();
 
 // Rute untuk mendapatkan semua produk
-router.get("/products", verifyUser, getProducts);
+router.get("/products", verifyToken, getProducts);
 
 // Rute untuk mendapatkan produk berdasarkan ID
-router.get("/products/:id", verifyUser, getProductById);
+router.get("/products/:id", verifyToken, getProductById);
 
 // Rute untuk membuat produk baru
-router.post("/products", verifyUser, createProduct);
+router.post("/products", verifyToken, createProduct);
+
 
 // Rute untuk memperbarui produk
-router.patch("/products/:id", verifyUser, updateProduct);
+router.patch("/products/:id", verifyToken, updateProduct);
 
 // Rute untuk menghapus produk
-router.delete("/products/:id", verifyUser, deleteProduct);
+router.delete("/products/:id", verifyToken, deleteProduct);
 
 // Rute untuk perusahaan menyetujui order
-router.patch("/orders/:id/approve", verifyUser, approveOrder);
+router.patch("/orders/:id/approve", verifyToken, approveOrder);
 
 // Rute untuk logistik memulai keberangkatan
-router.patch("/orders/:id/start-departure", verifyUser, startDeparture);
+router.patch("/orders/:id/start-departure", verifyToken, startDeparture);
 
 // Rute untuk logistik menyelesaikan keberangkatan dengan data tambahan
-router.patch("/orders/:id/complete-departure", verifyUser, completeDeparture);
+router.patch("/orders/:id/complete-departure", verifyToken, completeDeparture);
 
 // Rute untuk memproses order di pabrik
-router.patch("/orders/:id/process-factory", verifyUser, processAtFactory);
+router.patch("/orders/:id/process-factory", verifyToken, processAtFactory);
 
 // Rute untuk menyelesaikan proses order
-router.patch("/orders/:id/complete", verifyUser, completeProcessing);
+router.patch("/orders/:id/complete", verifyToken, completeProcessing);
 
 // Rute untuk perusahaan mendisplay harga aktual order
-router.post("/update-price-and-display-weight", verifyUser, updatePriceAndDisplayWeight);
+router.post("/update-price-and-display-weight", verifyToken, updatePriceAndDisplayWeight);
 
-// Rote History order jika pesanan selesai
-router.put("/complete-processing/:id", verifyUser, completeProcessing);
+// Rute untuk menyelesaikan proses order
+router.put("/complete-processing/:id", verifyToken, completeProcessing);
 
 export default router;
