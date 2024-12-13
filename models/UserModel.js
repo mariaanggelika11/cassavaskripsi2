@@ -52,6 +52,7 @@ const Users = db.define(
       allowNull: false,
       validate: {
         notEmpty: true,
+      // immutable: true, //role tidak dapat diubah setelah dibuat
       },
     },
   },

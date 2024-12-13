@@ -1,5 +1,5 @@
-import express from "express";
-import { getPetanis, createPetani, updatePetani, getPetaniById, deletePetani } from "../controllers/Petani.js";
+import express, { Router } from "express";
+import { getPetanis, createPetani, updatePetani, getPetaniById, deletePetani, getAllLahanOptions, getLahanById } from "../controllers/Petani.js";
 import { verifyToken } from "../middleware/AuthUser.js"; // Menggunakan verifyToken dari AuthUser.js
 
 const router = express.Router();
@@ -16,5 +16,11 @@ router.put("/petani/:id", verifyToken, updatePetani);
 
 // Route untuk menghapus data petani
 router.delete("/petani/:id", verifyToken, deletePetani);
+
+// Route untuk mendapatkan semua ID lahan dari semua petani
+router.get('/lahan', getAllLahanOptions);
+
+// Route untuk mendapatkan data dari ID lahan yang spesifik
+router.get('/lahan/:idLahan', getLahanById);
 
 export default router;

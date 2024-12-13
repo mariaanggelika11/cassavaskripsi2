@@ -21,7 +21,7 @@ async function deleteFile(filename) {
   }
 }
 
-export const createUser = async (req, res) => {
+export const createUser  = async (req, res) => {
   const { name, email, password, confPassword, role, nohp, alamat } = req.body;
   const foto = req.file ? req.file.filename : "";
 
@@ -30,9 +30,15 @@ export const createUser = async (req, res) => {
   }
 
   try {
+    // Cek apakah sudah ada pengguna dengan email dan role yang sama
+    const existingUser  = await User.findOne({ where: { email, role } });
+    if (existingUser ) {
+      return res.status(400).json({ msg: "Email sudah terdaftar dengan role yang sama" });
+    }
+
     const hashPassword = await bcrypt.hash(password, 10);
 
-    const newUser = await User.create({
+    const newUser  = await User.create({
       name,
       email,
       password: hashPassword,
@@ -40,7 +46,7 @@ export const createUser = async (req, res) => {
     });
 
     const userDetails = {
-      uuid: newUser.uuid,
+      uuid: newUser .uuid,
       name,
       email,
       nohp: nohp || "",
@@ -53,11 +59,11 @@ export const createUser = async (req, res) => {
     if (role.toLowerCase() === "petani") {
       await PetaniUsers.create(userDetails);
     } else if (role.toLowerCase() === "logistik") {
-      await LogisticUser.create(userDetails);
+      await LogisticUser .create(userDetails);
     } else if (role.toLowerCase() === "pabrik") {
-      await PabrikUser.create(userDetails);
+      await PabrikUser .create(userDetails);
     } else if (role.toLowerCase() === "perusahaan") {
-      await PerusahaanUser.create(userDetails);
+      await PerusahaanUser .create(userDetails);
     }
 
     res.status(201).json({ msg: "Register Berhasil" });
@@ -69,11 +75,7 @@ export const createUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   const { uuid } = req.params;
-  const { name, email, password, confPassword, role, nohp, alamat } = req.body;
-
-  if (password !== confPassword) {
-    return res.status(400).json({ msg: "Password dan Confirm Password tidak cocok" });
-  }
+  const { name, email, password, confPassword, nohp, alamat, role } = req.body;
 
   try {
     const userToUpdate = await User.findOne({ where: { uuid } });
@@ -81,52 +83,53 @@ export const updateUser = async (req, res) => {
       return res.status(404).json({ msg: "User tidak ditemukan" });
     }
 
-    let hashPassword = userToUpdate.password;
-    if (password && password.trim() !== "") {
-      hashPassword = await bcrypt.hash(password, 10);
+    // Cek apakah role dicoba untuk diubah
+    if ("role" in req.body && req.body.role !== userToUpdate.role) {
+      return res.status(403).json({ msg: "Role tidak dapat diubah." });
     }
 
-    let foto = userToUpdate.foto;
-    let url = userToUpdate.url;
+    // Simpan data yang akan diperbarui
+    const updatedData = {};
+
+    if (password) {
+      if (password !== confPassword) {
+        return res.status(400).json({ msg: "Password dan Confirm Password tidak cocok" });
+      }
+      updatedData.password = await bcrypt.hash(password, 10);
+    }
+
+    if (email) updatedData.email = email;
+    if (name) updatedData.name = name;
+    if (nohp) updatedData.nohp = nohp;
+    if (alamat) updatedData.alamat = alamat;
 
     if (req.file) {
-      foto = req.file.filename;
-      url = `${req.protocol}://${req.get("host")}/profile/${req.file.filename}`;
+      updatedData.foto = req.file.filename;
+      updatedData.url = `${req.protocol}://${req.get("host")}/profile/${req.file.filename}`;
 
       if (userToUpdate.foto && !userToUpdate.foto.startsWith("defaultProfile.png")) {
         await deleteFile(userToUpdate.foto);
       }
     }
 
-    await User.update(
-      {
-        name,
-        email,
-        password: hashPassword,
-        role,
-        foto,
-        url,
-      },
-      { where: { uuid } }
-    );
+    await User.update(updatedData, { where: { uuid } });
 
-    const updateDetails = { name, email, nohp: nohp || "", alamat: alamat || "", foto, url, password: hashPassword };
-
-    switch (role.toLowerCase()) {
+    // Perbarui data pengguna sesuai role
+    switch (userToUpdate.role.toLowerCase()) {
       case "petani":
-        await PetaniUsers.update(updateDetails, { where: { uuid } });
+        await PetaniUsers.update(updatedData, { where: { uuid } });
         break;
       case "logistik":
-        await LogisticUser.update(updateDetails, { where: { uuid } });
+        await LogisticUser.update(updatedData, { where: { uuid } });
         break;
       case "pabrik":
-        await PabrikUser.update(updateDetails, { where: { uuid } });
+        await PabrikUser.update(updatedData, { where: { uuid } });
         break;
       case "perusahaan":
-        await PerusahaanUser.update(updateDetails, { where: { uuid } });
+        await PerusahaanUser.update(updatedData, { where: { uuid } });
         break;
       default:
-        console.log("Role pengguna tidak dikenali, update detail pengguna tidak dilakukan.");
+        console.log("Role pengguna tidak dikenali.");
         break;
     }
 
@@ -136,6 +139,7 @@ export const updateUser = async (req, res) => {
     res.status(500).json({ msg: error.message });
   }
 };
+
 
 export const deleteUser = async (req, res) => {
   try {

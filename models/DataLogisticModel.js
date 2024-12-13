@@ -18,7 +18,8 @@ function generateRandomString(length) {
 // Definisi model Logistik
 const Logistik = db.define(
   "data_logistik",
-  {
+{
+    //data transaksional
     idPengiriman: {
       type: DataTypes.STRING,
       defaultValue: () => `LGS-${generateRandomString(6)}`, // Menghasilkan ID pengiriman acak dengan prefix 'LGS-'
@@ -34,43 +35,8 @@ const Logistik = db.define(
         notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
       },
     },
-    asal: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
-      },
-    },
-    tujuan: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
-      },
-    },
     estimasiWaktuTiba: {
       type: DataTypes.DATE,
-      allowNull: false,
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
-      },
-    },
-    nomorPolisiKendaraan: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
-      },
-    },
-    jenisKendaraan: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
-      },
-    },
-    kapasitasAngkut: {
-      type: DataTypes.FLOAT,
       allowNull: false,
       validate: {
         notEmpty: true, // Validasi bahwa nilai tidak boleh kosong

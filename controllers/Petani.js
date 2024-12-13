@@ -203,3 +203,41 @@ export const deletePetani = async (req, res) => {
     res.status(500).json({ msg: error.message });
   }
 };
+
+/// Fungsi untuk mendapatkan semua ID lahan dari semua petani
+export const getAllLahanOptions = async (req, res) => {
+  try {
+    const petani = await Petani.findAll({
+      attributes: ['idlahan'], // Ambil hanya ID lahan
+    });
+
+    if (!petani.length) {
+      return res.status(404).json({ msg: "Tidak ada lahan yang ditemukan." });
+    }
+
+    // Mengambil hanya ID lahan
+    const lahanOptions = petani.map(p => p.idlahan);
+    res.status(200).json(lahanOptions); // Kirim respons dengan ID lahan
+  } catch (error) {
+    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
+  }
+};
+
+// Fungsi untuk mendapatkan data dari ID lahan yang spesifik
+export const getLahanById = async (req, res) => {
+  const { idLahan } = req.params; // Ambil ID lahan dari parameter URL
+
+  try {
+    const lahan = await Petani.findOne({
+      where: { idlahan: idLahan }, // Ambil data berdasarkan ID lahan
+    });
+
+    if (!lahan) {
+      return res.status(404).json({ msg: "Lahan tidak ditemukan." });
+    }
+
+    res.status(200).json(lahan); // Kirim respons dengan data lahan
+  } catch (error) {
+    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
+  }
+};

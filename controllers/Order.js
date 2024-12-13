@@ -3,6 +3,8 @@
 import Product from "../models/OrderPemanenModel.js";
 import User from "../models/UserModel.js"; // Import model User
 import OrderHistory from "../models/OrderHistory.js"; // Import model OrderHistory
+import Perusahaan from "../models/DataPerusahaanModel.js";
+import Petani from "../models/DataPetaniModel.js";
 import { Op } from "sequelize"; // Import operator Sequelize
 
 // Controller untuk mendapatkan semua produk
@@ -88,25 +90,71 @@ export const getProductById = async (req, res) => {
   }
 };
 
-// Controller untuk membuat produk baru
 export const createProduct = async (req, res) => {
-  const { tanggalPemanenan, statusOrder, varietasSingkong, estimasiBerat, estimasiHarga, noHpLogistik } = req.body;
+  const { idLahan, tanggalPemanenan, statusOrder, varietasSingkong, estimasiBerat } = req.body;
+
+  // Validasi bahwa idLahan harus diisi
+  if (!idLahan) {
+    return res.status(400).json({ msg: "ID lahan harus diisi." });
+  }
+
   try {
+    // Ambil harga terakhir yang diperbarui dari perusahaan
+    const perusahaanData = await Perusahaan.findOne({
+      order: [['tanggalupdateharga', 'DESC']],
+      limit: 1,
+      attributes: ['hargaGradeA', 'hargaGradeB', 'hargaGradeC'] // Ambil semua harga
+    });
+
+    if (!perusahaanData) {
+      return res.status(400).json({ msg: "Data harga tidak ditemukan" });
+    }
+
+    // Ambil harga berdasarkan varietas singkong
+    let hargaGrade;
+    if (varietasSingkong === "Grade A") {
+      hargaGrade = perusahaanData.hargaGradeA || 0; // Ambil harga grade A
+    } else if (varietasSingkong === "Grade B") {
+      hargaGrade = perusahaanData.hargaGradeB || 0; // Ambil harga grade B
+    } else if (varietasSingkong === "Grade C") {
+      hargaGrade = perusahaanData.hargaGradeC || 0; // Ambil harga grade C
+    } else {
+      return res.status(400).json({ msg: "Varietas singkong tidak valid" });
+    }
+
+    // Hitung estimasi harga
+    const estimasiHarga = estimasiBerat * hargaGrade;
+
+    // Ambil data petani berdasarkan userId
+    const petani = await Petani.findOne({
+      where: { userId: req.userId }, // Ambil data petani berdasarkan userId
+    });
+
+    if (!petani) {
+      return res.status(400).json({ msg: "Data petani tidak ditemukan" });
+    }
+
+    // Verifikasi bahwa idLahan yang diberikan adalah milik petani
+    if (petani.idlahan !== idLahan) {
+      return res.status(403).json({ msg: "Anda tidak memiliki akses ke ID lahan ini." });
+    }
+
+    // Buat produk baru
     await Product.create({
+      idLahan: petani.idlahan, // Ambil ID lahan dari data petani
       tanggalPemanenan,
       statusOrder: statusOrder || "pending", // Set status default ke 'pending' jika tidak ada status yang disediakan
       varietasSingkong,
       estimasiBerat,
-      estimasiHarga,
-      noHpLogistik,
+      estimasiHarga, // Simpan estimasi harga yang telah dihitung
       userId: req.userId, // Asumsikan req.userId sudah diisi melalui middleware autentikasi
     });
+
     res.status(201).json({ msg: "Order Pemanenan Created Successfully" }); // Kirim respons berhasil
   } catch (error) {
     res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
   }
 };
-
 
 // Controller untuk memperbarui produk
 export const updateProduct = async (req, res) => {
@@ -191,7 +239,7 @@ export const deleteProduct = async (req, res) => {
   }
 };
 
-// Controller untuk menyetujui order oleh perusahaan
+// Controller untuk menyetujui order
 export const approveOrder = async (req, res) => {
   try {
     const product = await Product.findOne({
@@ -199,159 +247,82 @@ export const approveOrder = async (req, res) => {
         uuid: req.params.id,
       },
     });
-    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" }); // Kirim respons jika produk tidak ditemukan
-
-    // Cek apakah status order sudah disetujui
-    if (product.statusOrder !== "pending") {
-      return res.status(400).json({ msg: "Order sudah disetujui atau tidak bisa diubah" }); // Kirim respons jika status tidak sesuai
-    }
-
-    if (req.role === "perusahaan") {
-      await Product.update({ statusOrder: "menunggu dipanen" }, { where: { id: product.id } });
-      res.status(200).json({ msg: "Order disetujui, menunggu dipanen" }); // Kirim respons berhasil
-    } else {
-      res.status(403).json({ msg: "Akses terlarang" }); // Kirim respons akses terlarang
-    }
-  } catch (error) {
-    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
-  }
-};
-
-// Controller untuk memulai keberangkatan oleh logistik
-export const startDeparture = async (req, res) => {
-  try {
-    const product = await Product.findOne({
-      where: {
-        uuid: req.params.id,
-      },
-    });
-    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" }); // Kirim respons jika produk tidak ditemukan
-
-    // Cek apakah status order sudah memulai keberangkatan
-    if (product.statusOrder !== "menunggu dipanen") {
-      return res.status(400).json({ msg: "Keberangkatan sudah dimulai atau tidak bisa diubah" }); // Kirim respons jika status tidak sesuai
-    }
-
-    if (req.role === "logistik") {
-      await Product.update({ statusOrder: "menuju pabrik" }, { where: { id: product.id } });
-      res.status(200).json({ msg: "Keberangkatan dimulai, menuju pabrik" }); // Kirim respons berhasil
-    } else {
-      res.status(403).json({ msg: "Akses terlarang" }); // Kirim respons akses terlarang
-    }
-  } catch (error) {
-    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
-  }
-};
-
-// Controller untuk menyelesaikan keberangkatan oleh logistik
-export const completeDeparture = async (req, res) => {
-  const { beratSingkong, beratBatang, beratDaun } = req.body;
-  try {
-    const product = await Product.findOne({
-      where: {
-        uuid: req.params.id,
-      },
-    });
-    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" }); // Kirim respons jika produk tidak ditemukan
-
-    // Cek apakah status order sudah menyelesaikan keberangkatan
-    if (product.statusOrder !== "menuju pabrik") {
-      return res.status(400).json({ msg: "Keberangkatan sudah selesai atau tidak bisa diubah" }); // Kirim respons jika status tidak sesuai
-    }
-
-    if (req.role === "logistik") {
-      if (!beratSingkong || !beratBatang || !beratDaun) {
-        return res.status(400).json({ msg: "Berat Singkong, Batang, dan Daun harus diisi" });
-      }
-      await Product.update(
-        {
-          statusOrder: "menunggu diproses",
-          beratSingkong,
-          beratBatang,
-          beratDaun,
-        },
-        { where: { id: product.id } }
-      );
-
-      res.status(200).json({ msg: "Keberangkatan selesai, data berat diperbarui. Mohon perusahaan untuk mengisi harga aktual dan menampilkan berat." }); // Kirim respons berhasil
-    } else {
-      res.status(403).json({ msg: "Akses terlarang" }); // Kirim respons akses terlarang
-    }
-  } catch (error) {
-    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
-  }
-};
-
-// Controller untuk memproses order di pabrik
-export const processAtFactory = async (req, res) => {
-  try {
-    const product = await Product.findOne({
-      where: {
-        uuid: req.params.id,
-      },
-    });
-    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" }); // Kirim respons jika produk tidak ditemukan
-
-    // Cek apakah status order sudah diproses di pabrik
-    if (product.statusOrder !== "menunggu diproses") {
-      return res.status(400).json({ msg: "Order sudah diproses atau tidak bisa diubah" }); // Kirim respons jika status tidak sesuai
-    }
-
-    if (req.role === "pabrik") {
-      await Product.update({ statusOrder: "diproses pabrik" }, { where: { id: product.id } });
-      res.status(200).json({ msg: "Proses di pabrik dimulai" }); // Kirim respons berhasil
-    } else {
-      res.status(403).json({ msg: "Akses terlarang" }); // Kirim respons akses terlarang
-    }
-  } catch (error) {
-    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
-  }
-};
-
-// Controller untuk mengupdate harga dan menampilkan berat oleh perusahaan
-export const updatePriceAndDisplayWeight = async (req, res) => {
-  const { productId, hargaAktual } = req.body;
-  try {
-    // Cek apakah pengguna memiliki peran perusahaan
-    if (req.role !== "perusahaan") {
-      return res.status(403).json({ msg: "Akses terlarang" }); // Kirim respons akses terlarang jika pengguna bukan perusahaan
-    }
-
-    // Temukan produk berdasarkan ID
-    const product = await Product.findOne({
-      where: {
-        uuid: productId,
-      },
-    });
-
-    // Kirim respons jika produk tidak ditemukan
     if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" });
 
-    // Cek apakah status order sudah selesai
-    if (product.statusOrder !== "diproses pabrik") {
-      return res.status(400).json({ msg: "Order sudah selesai atau tidak bisa diubah" }); // Kirim respons jika status tidak sesuai
+    // Cek status order berdasarkan peran
+    if (product.statusOrder === "pending" && req.role === "perusahaan") {
+      // Jika perusahaan menyetujui
+      await Product.update(
+        { 
+          statusOrder: "menunggu pabrik dan logistik menyetujui", 
+          logistikApproved: false, // Reset status logistik
+          pabrikApproved: false // Reset status pabrik
+        }, 
+        { where: { id: product.id } }
+      );
+      return res.status(200).json({ msg: "Order disetujui oleh perusahaan, menunggu pabrik dan logistik menyetujui" });
     }
 
-    // Update harga aktual dan status order
-    await Product.update(
-      {
-        hargaAktual: hargaAktual,
-        statusOrder: "selesai",
-      },
-      {
-        where: {
-          id: product.id,
-        },
-      }
-    );
+    if (product.statusOrder === "menunggu pabrik dan logistik menyetujui" && req.role === "pabrik") {
+      // Jika pabrik menyetujui
+      await Product.update(
+        { 
+          statusOrder: "menunggu logistik menyetujui", 
+          pabrikApproved: true // Tandai pabrik telah menyetujui
+        }, 
+        { where: { id: product.id } }
+      );
+      return res.status(200).json({ msg: "Order disetujui oleh pabrik, menunggu logistik menyetujui" });
+    }
 
-    // Kirim respons berhasil
-    res.status(200).json({ msg: "Harga aktual telah diupdate, produk selesai diproses" });
+    if (product.statusOrder === "menunggu logistik menyetujui" && req.role === "logistik") {
+      // Jika logistik menyetujui
+      await Product.update(
+        { 
+          statusOrder: "menunggu panen", 
+          logistikApproved: true // Tandai logistik telah menyetujui
+        }, 
+        { where: { id: product.id } }
+      );
+      return res.status(200).json({ msg: "Order disetujui oleh logistik, status sekarang: menunggu panen" });
+    }
+
+    // Jika status order tidak sesuai dengan yang diharapkan
+    return res.status(400).json({ msg: "Status order tidak dapat diubah" });
+
   } catch (error) {
-    // Kirim respons error jika terjadi kesalahan server
-    res.status(500).json({ msg: error.message });
+    return res.status(500).json({ msg: error.message });
   }
 };
+
+// Controller untuk menolak order oleh perusahaan
+export const rejectOrderByCompany = async (req, res) => {
+  try {
+    const product = await Product.findOne({
+      where: {
+        uuid: req.params.id,
+      },
+    });
+    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" }); // Kirim respons jika produk tidak ditemukan
+
+    // Cek apakah pengguna adalah perusahaan
+    if (req.role === "perusahaan") {
+      // Update status order menjadi 'dibatalkan'
+      await Product.update({ statusOrder: "dibatalkan" }, { where: { id: product.id } });
+
+      // Tambahkan entri baru ke OrderHistory
+      await createOrderHistoryEntry(product.id, req.userId, "dibatalkan", product.namaLogistik, product.namaPerusahaan);
+
+      res.status(200).json({ msg: "Order telah dibatalkan" }); // Kirim respons berhasil
+    } else {
+      res.status(403).json({ msg: "Akses terlarang" }); // Kirim respons akses terlarang
+    }
+  } catch (error) {
+    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
+  }
+};
+
+
 
 // Fungsi untuk membuat entri baru di OrderHistory
 export const createOrderHistoryEntry = async (orderId, userId, statusOrder, namaLogistik, namaPabrik) => {
@@ -370,33 +341,3 @@ export const createOrderHistoryEntry = async (orderId, userId, statusOrder, nama
   }
 };
 
-// Fungsi untuk menyelesaikan proses order
-export const completeProcessing = async (req, res) => {
-  try {
-    const product = await Product.findOne({
-      where: {
-        uuid: req.params.id,
-      },
-    });
-    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" });
-
-    // Cek apakah status order sudah selesai
-    if (product.statusOrder !== "diproses pabrik") {
-      return res.status(400).json({ msg: "Order sudah selesai atau tidak bisa diubah" }); // Kirim respons jika status tidak sesuai
-    }
-
-    if (["admin", "pabrik"].includes(req.role)) {
-      // Update status pesanan menjadi 'selesai'
-      await Product.update({ statusOrder: "selesai" }, { where: { id: product.id } });
-
-      // Tambahkan entri baru ke OrderHistory
-      await createOrderHistoryEntry(product.id, req.userId, "selesai", product.namaLogistik, product.namaPerusahaan);
-
-      res.status(200).json({ msg: "Proses selesai, history order telah ditambahkan" });
-    } else {
-      res.status(403).json({ msg: "Akses terlarang" });
-    }
-  } catch (error) {
-    res.status(500).json({ msg: error.message });
-  }
-};

@@ -54,7 +54,6 @@ export const getPerusahaanById = async (req, res) => {
 export const createPerusahaan = async (req, res) => {
   const {
     idharga,
-    tanggalupdateharga,
     hargaGradeA,
     catatanGradeA,
     hargaGradeB,
@@ -66,7 +65,7 @@ export const createPerusahaan = async (req, res) => {
   try {
     await Perusahaan.create({
       idharga: idharga,
-      tanggalupdateharga: tanggalupdateharga,
+      tanggalupdateharga: new Date(), // Set tanggal update harga ke waktu saat ini
       hargaGradeA: hargaGradeA,
       catatanGradeA: catatanGradeA,
       hargaGradeB: hargaGradeB,
@@ -93,7 +92,6 @@ export const updatePerusahaan = async (req, res) => {
 
     const {
       idharga,
-      tanggalupdateharga,
       hargaGradeA,
       catatanGradeA,
       hargaGradeB,
@@ -106,7 +104,7 @@ export const updatePerusahaan = async (req, res) => {
       await perusahaan.update(
         {
           idharga,
-          tanggalupdateharga,
+          tanggalupdateharga: new Date(), // Set tanggal update harga ke waktu saat ini
           hargaGradeA,
           catatanGradeA,
           hargaGradeB,

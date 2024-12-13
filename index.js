@@ -6,8 +6,10 @@ import UserRoute from "./routes/UserRoute.js";
 import OrderRoute from "./routes/OrderRoute.js";
 import AuthRoute from "./routes/AuthRoute.js";
 import PetaniRoute from "./routes/PetaniRoute.js";
+import LogistikdasarR from "./routes/LogistikdasarR.js";
 import LogistikRoute from "./routes/LogistikRoute.js";
 import PabrikRoute from "./routes/PabrikRoute.js";
+import ProduksiRoute from "./routes/ProduksiRoute.js";
 import PerusahaanRoute from "./routes/PerusahaanRoute.js";
 import SearchRoute from "./routes/SearchRoute.js";
 
@@ -52,6 +54,7 @@ app.use(
   })
 );
 
+
 // Handle preflight requests
 app.options(
   "*",
@@ -93,13 +96,25 @@ app.use(express.json());
   }
 })();
 
+// Sinkronisasi Database
+(async () => {
+  try {
+    await db.sync({ alter: true, logging: console.log }); // Perbarui skema tanpa menghapus data
+    console.log("Database synced successfully.");
+  } catch (error) {
+    console.error("Database sync failed:", error);
+  }
+})();
+
 // Gunakan routes yang sudah memiliki middleware JWT
 app.use(UserRoute);
 app.use(OrderRoute);
 app.use(AuthRoute);
 app.use(PetaniRoute);
+app.use(LogistikdasarR);
 app.use(LogistikRoute);
 app.use(PabrikRoute);
+app.use(ProduksiRoute);
 app.use(SearchRoute);
 app.use(PerusahaanRoute);
 

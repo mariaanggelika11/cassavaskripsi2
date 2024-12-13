@@ -19,73 +19,38 @@ function generateRandomString(length) {
 const Pabrik = db.define(
   "data_pabrik", // Nama tabel di database
   {
-    tanggalPenerimaan: {
-      type: DataTypes.DATEONLY, // Tipe data tanggal (hanya tanggal, tanpa waktu)
-      allowNull: false, // Tidak boleh null
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
-      },
-    },
-    idPengiriman: {
+    iddatadasarpbk: {
       type: DataTypes.STRING,
-      defaultValue: () => `PBK-${generateRandomString(6)}`, // Menghasilkan ID pengiriman acak dengan prefix 'PBK-'
+      defaultValue: () => `PBKD-${generateRandomString(6)}`, // Menghasilkan ID pengiriman acak dengan prefix 'PBK-'
       allowNull: false,
       validate: {
         notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
       },
     },
-    beratTotalDiterima: {
-      type: DataTypes.FLOAT, // Tipe data float (angka desimal)
-      allowNull: false,
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
+    kapasitasram: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
       },
-    },
-    evaluasiKualitas: {
-      type: DataTypes.STRING, // Misal: 'Baik', 'Cukup', 'Kurang'
-      allowNull: false,
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
+      kapasitasproduksi: {
+        type: DataTypes.FLOAT, // Tipe data float (angka desimal)
+        allowNull: false,
+        validate: {
+          notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
+        },
       },
-    },
-    catatanKualitas: {
-      type: DataTypes.TEXT, // Tipe data teks (panjang)
-      allowNull: true, // Boleh kosong
-    },
-    kapasitasProduksi: {
-      type: DataTypes.FLOAT, // Tipe data float (angka desimal)
-      allowNull: false,
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
-      },
-    },
-    produksiHarianTapioka: {
-      type: DataTypes.FLOAT, // Tipe data float (angka desimal)
-      allowNull: false,
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
-      },
-    },
-    kualitasOutput: {
-      type: DataTypes.STRING, // Misal: 'Standard', 'Premium'
-      allowNull: false,
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
-      },
-    },
-    permasalahanOperasional: {
-      type: DataTypes.TEXT, // Tipe data teks (panjang)
-      allowNull: true, // Boleh kosong
-    },
-    kebutuhanPerbaikan: {
-      type: DataTypes.TEXT, // Tipe data teks (panjang)
-      allowNull: true, // Boleh kosong
-    },
+      memproduksi: {
+        type:DataTypes.STRING, // Tipe data teks (panjang)
+          allowNull: false, // Boleh kosong
+          validate: {
+          notEmpty: true, // validasi bahwa nilai tidak boleh kosong
+        },
+        },
   },
   {
     freezeTableName: true, // Nama tabel tidak akan diubah secara otomatis menjadi bentuk jamak oleh Sequelize
   }
 );
+
 
 // Membuat relasi antara Users dan Pabrik
 Users.hasMany(Pabrik); // User memiliki banyak data pabrik

@@ -79,8 +79,45 @@ const OrderPemanen = db.define(
     beratDaun: {
       type: DataTypes.INTEGER, // Tipe data integer
     },
-  },
-  {
+    tanggalPenerimaan: {
+      type: DataTypes.DATE, // Mengubah tipe data menjadi DATE untuk menyertakan waktu
+      allowNull: false, // Tidak boleh null
+      defaultValue: Sequelize.fn('NOW'), // Menggunakan waktu saat ini sebagai default
+      validate: {
+        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
+      },
+    },
+    idPengiriman: {
+      type: DataTypes.STRING,
+      defaultValue: () => `PBK-${generateRandomString(6)}`, // Menghasilkan ID pengiriman acak dengan prefix 'PBK-'
+      allowNull: false,
+      validate: {
+        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
+      },
+    },
+    beratTotalDiterima: {
+      type: DataTypes.FLOAT, // Tipe data float (angka desimal)
+      allowNull: false,
+      validate: {
+        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
+      },
+    },
+    catatanKualitas: {
+      type: DataTypes.TEXT, // Tipe data teks (panjang)
+      allowNull: true, // Boleh kosong
+      validate: {
+      notEmpty: true, // validasi bahwa nilai tidak boleh kosong
+    },
+    },
+    evaluasiKualitas: {
+      type: DataTypes.TEXT, // 
+      allowNull: false,
+      validate: {
+        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
+      },
+    },
+}, 
+{
     freezeTableName: true, // Menggunakan nama tabel sesuai dengan nama model
   }
 );
