@@ -7,11 +7,15 @@ import OrderRoute from "./routes/OrderRoute.js";
 import AuthRoute from "./routes/AuthRoute.js";
 import PetaniRoute from "./routes/PetaniRoute.js";
 import LogistikdasarR from "./routes/LogistikdasarR.js";
-import LogistikRoute from "./routes/LogistikRoute.js";
+import LogistikRoute from "./routes/TransaksiLogistikRoute.js";
 import PabrikRoute from "./routes/PabrikRoute.js";
 import ProduksiRoute from "./routes/ProduksiRoute.js";
 import PerusahaanRoute from "./routes/PerusahaanRoute.js";
 import SearchRoute from "./routes/SearchRoute.js";
+// import TransaksiPabrikR from "./routes/TransaksiPabrikR.js";
+import limbahpetaniR from "./routes/LimbahPetaniR.js";
+import TransaksiLogistikRoute from "./routes/TransaksiLogistikRoute.js";
+import TransaksiPerusahaanR from "./routes/TransaksiPerusahaanR.js";
 
 dotenv.config();
 const app = express();
@@ -86,16 +90,6 @@ app.options(
 app.use("/profile", express.static("uploads/img/profile"));
 app.use(express.json());
 
-// Database synchronization
-(async () => {
-  try {
-    await db.sync();
-    console.log("All models were synchronized successfully.");
-  } catch (error) {
-    console.error("Error syncing database:", error);
-  }
-})();
-
 // Sinkronisasi Database
 (async () => {
   try {
@@ -117,6 +111,10 @@ app.use(PabrikRoute);
 app.use(ProduksiRoute);
 app.use(SearchRoute);
 app.use(PerusahaanRoute);
+app.use(TransaksiLogistikRoute)
+app.use(limbahpetaniR)
+// app.use(TransaksiPabrikR);
+app.use(TransaksiPerusahaanR)
 
 app.listen(process.env.APP_PORT, () => {
   console.log(

@@ -35,14 +35,7 @@ const Logistikdasar = db.define(
           notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
         },
       },
-      tujuan: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        validate: {
-          notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
-        },
-      },
-      nomorPolisiKendaraan: {
+      PolisiKendaraan: {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
@@ -76,8 +69,8 @@ const Logistikdasar = db.define(
     }
   );
   
-  // Relasi antara Users dan Logistik
-  Users.hasMany(Logistikdasar); // User memiliki banyak data logistik
-  Logistikdasar.belongsTo(Users, { foreignKey: "userId" }); // Data logistik milik satu user, dengan userId sebagai foreign key
+   // Relasi antara Users dan Logistik
+   Users.hasMany(Logistikdasar); // User memiliki banyak data logistik
+   Logistikdasar.belongsTo(Users, { foreignKey: "userId" }); // Data logistik milik satu user, dengan userId sebagai foreign key
   
   export default Logistikdasar;

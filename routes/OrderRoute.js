@@ -1,5 +1,5 @@
 import express from "express";
-import { getProducts, getProductById, createProduct, updateProduct, deleteProduct, approveOrder, rejectOrderByCompany} from "../controllers/Order.js";
+import { getProducts, getProductById, createProduct, updateProduct, deleteProduct} from "../controllers/Order.js";
 import { verifyToken } from "../middleware/AuthUser.js"; // Menggunakan verifyToken dari AuthUser.js
 
 const router = express.Router();
@@ -19,12 +19,12 @@ router.patch("/products/:id", verifyToken, updateProduct);
 // Rute untuk menghapus produk
 router.delete("/products/:id", verifyToken, deleteProduct);
 
-// Rute untuk perusahaan menyetujui order
-router.patch("/orders/:id/approve", verifyToken, approveOrder);
+// // Rute untuk perusahaan menyetujui order
+// router.patch("/orders/:id/approve", verifyToken, approveOrder);
 
 
-// Rute untuk menolak order oleh perusahaan
-router.patch("/orders/:id/reject", rejectOrderByCompany);
+// // Rute untuk menolak order oleh perusahaan
+// router.patch("/orders/:id/reject", rejectOrderByCompany);
 
 // // Rute untuk logistik memulai keberangkatan
 // router.patch("/orders/:id/start-departure", verifyToken, startDeparture);

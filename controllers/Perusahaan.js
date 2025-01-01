@@ -1,4 +1,4 @@
-import Perusahaan from "../models/DataPerusahaanModel.js";
+import Perusahaan from "../models/DasarPerusahaan.js";
 import User from "../models/UserModel.js";
 
 // Fungsi untuk mendapatkan semua data perusahaan

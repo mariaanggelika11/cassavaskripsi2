@@ -1,4 +1,4 @@
-import Logistik from "../models/DataLogisticModel.js";
+import Logistik from "../models/TransaksiLogistik.js";
 import User from "../models/UserModel.js";
 import jwt from "jsonwebtoken";
 

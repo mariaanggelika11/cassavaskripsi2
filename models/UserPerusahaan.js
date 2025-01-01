@@ -1,9 +1,8 @@
+// UserPerusahaan.js
 import { Sequelize } from "sequelize";
 import db from "../config/Database.js";
-import PerusahaanUser from "./UserPerusahaan.js";
-
 const { DataTypes } = Sequelize;
-// Fungsi untuk menghasilkan string acak dengan panjang tertentu
+
 function generateRandomString(length) {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
@@ -14,54 +13,46 @@ function generateRandomString(length) {
   return result;
 }
 
-const Users = db.define(
-  "users",
+const PerusahaanUser = db.define(
+  "perusahaanusers", 
   {
     uuid: {
       type: DataTypes.STRING,
-      defaultValue: () => `USR-${generateRandomString(6)}`,
+      defaultValue: () => `PRN-${generateRandomString(6)}`,
       allowNull: false,
-      validate: {
-        notEmpty: true,
-      },
+      validate: { notEmpty: true },
     },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: {
-        notEmpty: true,
-        len: [3, 100],
-      },
+      validate: { notEmpty: true, len: [3, 100] },
     },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: {
-        notEmpty: true,
-        isEmail: true,
-      },
+      validate: { notEmpty: true, isEmail: true },
     },
+    nohp: { type: DataTypes.STRING },
+    alamat: { type: DataTypes.STRING },
+    foto: { type: DataTypes.STRING },
+    url: { type: DataTypes.STRING },
     password: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: {
-        notEmpty: true,
-      },
-    },
-    role: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        notEmpty: true,
-      // immutable: true, //role tidak dapat diubah setelah dibuat
-      },
+      validate: { notEmpty: true },
     },
   },
   {
     freezeTableName: true,
   }
 );
-// Tentukan hubungan setelah kedua model terdefinisi
-Users.hasOne(PerusahaanUser, { foreignKey: 'userId' });
 
-export default Users;
+// Menggunakan dynamic import untuk menghindari error saat inisialisasi
+async function setAssociations() {
+  const { default: Users } = await import("./UserModel.js");  // Import secara dinamis
+  PerusahaanUser.belongsTo(Users, { foreignKey: 'userId' });
+}
+
+setAssociations();
+
+export default PerusahaanUser;

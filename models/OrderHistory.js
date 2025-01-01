@@ -1,49 +1,53 @@
 import { DataTypes } from "sequelize"; // Mengimpor DataTypes dari modul sequelize
 import db from "../config/Database.js"; // Mengimpor konfigurasi database dari file Database.js
 
-// Definisi model OrderHistory
-const OrderHistory = db.define(
-  "OrderHistory", // Nama model
+
+const OrderHistory = db.define('OrderHistory', 
   {
-    id: {
-      type: DataTypes.INTEGER, // Tipe data integer
-      primaryKey: true, // Menjadikan kolom ini sebagai primary key
-      autoIncrement: true, // Nilai akan diincrement secara otomatis
+  // Menyimpan ID unik untuk setiap riwayat
+  idOrder: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,  //
+    primaryKey: true,
+    references: {
+      model: 'order_pemanen', // Pastikan mengacu pada nama tabel yang benar (misalnya Products)
+      key: 'uuid', // Mengacu pada kolom yang sesuai di tabel Product
     },
-    orderId: {
-      type: DataTypes.INTEGER, // Tipe data integer
-      allowNull: false, // Tidak boleh null
-    },
-    userId: {
-      type: DataTypes.INTEGER, // Tipe data integer
-      allowNull: false, // Tidak boleh null
-    },
-    statusOrder: {
-      type: DataTypes.STRING, // Tipe data string
-      allowNull: false, // Tidak boleh null
-    },
-    namaLogistik: {
-      type: DataTypes.STRING, // Tipe data string
-    },
-    namaPabrik: {
-      type: DataTypes.STRING, // Tipe data string
-    },
-    // Tambahkan kolom lain sesuai kebutuhan
   },
-  {
-    tableName: "order_history", // Nama tabel di database
-    timestamps: true, // Menambahkan kolom createdAt dan updatedAt secara otomatis
-  }
-);
+  
+  // Menyimpan status order yang baru
+  statusOrder: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
 
-// Sinkronkan model dengan database
-OrderHistory.sync()
-  .then(() => {
-    console.log("Tabel OrderHistory telah dibuat jika belum ada.");
-  })
-  .catch((err) => {
-    console.error("Gagal membuat tabel OrderHistory:", err);
-  });
+  // Menyimpan nama pengguna yang relevan (misalnya nama perusahaan, pabrik, atau logistik)
+  namaPerusahaan: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  
+  namaPabrik: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  
+  namaLogistik: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
 
-// Export model OrderHistory
-export default OrderHistory; // Mengekspor model OrderHistory agar bisa digunakan di bagian lain dari aplikasi
+  // Tanggal dan waktu perubahan status order
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: db.NOW,
+    allowNull: false,
+  },
+}, {
+  // Nama tabel untuk menyimpan data OrderHistory
+  tableName: 'order_histories',
+  timestamps: false, // Matikan timestamp otomatis (createdAt, updatedAt)
+});
+
+export default OrderHistory;

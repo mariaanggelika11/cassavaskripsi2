@@ -11,6 +11,7 @@ router.get("/petani/:id", verifyToken, getPetaniById);
 
 // Route untuk membuat data petani baru
 router.post("/petani", verifyToken, createPetani);
+
 // Route untuk memperbarui data petani
 router.put("/petani/:id", verifyToken, updatePetani);
 

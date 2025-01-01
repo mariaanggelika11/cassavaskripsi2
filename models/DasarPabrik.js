@@ -27,6 +27,10 @@ const Pabrik = db.define(
         notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
       },
     },
+    pabrikUuid: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     kapasitasram: {
         type: DataTypes.FLOAT,
         allowNull: true,

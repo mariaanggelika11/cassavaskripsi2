@@ -1,5 +1,5 @@
 import express from "express";
-import { getLogistik, createLogistik, updateLogistik, deleteLogistik, getLogistikById } from "../controllers/logistik.js";
+import { getLogistik, createLogistik, updateLogistik, deleteLogistik, getLogistikById } from "../controllers/LogistikTransaksi.js";
 import { verifyToken } from "../middleware/AuthUser.js";
 
 const router = express.Router();

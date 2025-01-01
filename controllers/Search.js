@@ -1,94 +1,135 @@
-import DataLogistik from "../models/DataLogisticModel.js";
-import DataPabrik from "../models/DataPabrikModel.js";
-import DataPetani from "../models/DataPetaniModel.js";
-import LogisticUser from "../models/LogisticUserModel.js";
-import PabrikUser from "../models/PabrikUserModel.js";
-import PetaniUser from "../models/PetaniUserModel.js";
-import OrderPemanen from "../models/OrderPemanenModel.js";
-import User from "../models/UserModel.js";
-import DataPerusahaan from "../models/DataPerusahaanModel.js";
-import PerusahaanUsers from "../models/PerusahaanUserModel.js";
+
+import Product from "../models/OrderPanen.js";
+import User from "../models/UserModel.js"; // Import model User
+import Logistikdasar from "../models/DasarLogistik.js";
+import TransaksiPR from "../models/TransaksiPerusahaan.js";
+import Logistik from "../models/TransaksiLogistik.js";
+import Perusahaan from "../models/DasarPerusahaan.js";
+import Petani from "../models/RencanaTanam.js";
+import TransaksiPBK from "../models/TransaksiPabrik.js";
+import limbahpetani from "../models/LimbahPetani.js";
+import Pabrik from "../models/DasarPabrik.js";
+import TransaksiLogistik from "../models/TransaksiLogistik.js"; // Model transaksi logistik
+import { Op } from "sequelize"; // Import operator Sequelize
 
 export const searchById = async (req, res) => {
   try {
-    const { uuid } = req.params; // Gunakan uuid sebagai parameter pencarian
+    const { uuid } = req.params; // Use uuid from params for searching
 
-    // Mencari di model DataPabrik
-    let result = await DataPabrik.findOne({
-      where: { idPengiriman: uuid },
-      include: [{ model: User, attributes: ["name", "email"] }],
+    // Query the product based on UUID
+    const result = await Product.findOne({
+      attributes: [
+        "uuid",
+        "idLahan",
+        "tanggalPemanenan",
+        "statusOrder",
+        "varietasSingkong",
+        "estimasiBerat",
+        "estimasiHarga",
+        "userId",
+        "namaLogistik",
+        "namaPerusahaan",
+        "namaPabrik",
+        "emailPerusahaan",
+        "emailLogistik",
+        "emailPabrik",
+      ],
+      where: {
+        uuid, // Use UUID as the search criterion
+      },
+      include: [
+        {
+          model: User,
+          attributes: ["name", "email"],
+        },
+        {
+          model: Logistik,
+          attributes: [
+            "orderPemanenUuid",
+            "tanggalPengiriman",
+            "waktuPengiriman",
+            "estimasiWaktuTiba",
+            "aktualWaktuTiba",
+            "catatanEfisiensiRute",
+            "biayaTransportasi",
+            "kondisiPengiriman",
+            "catatanDariPenerima",
+          ],
+          where: {
+            orderPemanenUuid: uuid,
+          },
+          required: false,
+        },
+        {
+          model: TransaksiPBK,
+          attributes: [
+            "orderPemanenUuid",
+            "tanggalPenerimaan",
+            "beratTotalDiterima",
+            "catatanKualitas",
+            "evaluasiKualitas",
+          ],
+          where: {
+            orderPemanenUuid: uuid,
+          },
+          required: false,
+        },
+        {
+          model: TransaksiPR,
+          attributes: [
+            "orderPemanenUuid",
+            "hargaaktual",
+            "catatanharga",
+            "tanggalselesai",
+          ],
+          where: {
+            orderPemanenUuid: uuid,
+          },
+          required: false,
+        },
+        {
+          model: limbahpetani, // Corrected model name
+          attributes: [
+            "beratLimbahBatang",
+            "catatanLimbahBatang",
+            "beratLimbahDaun",
+            "catatanLimbahDaun",
+            "beratLimbahAkar",
+            "catatanLimbahAkar",
+          ],
+          where: {
+            orderPemanenUuid: uuid,
+          },
+          required: false,
+        },
+      ],
     });
 
+    // If no product found, return an error
     if (!result) {
-      // Jika tidak ditemukan di Pabrik, cari di Perusahaan
-      result = await DataPerusahaan.findOne({
-        where: { idharga: uuid },
-        include: [{ model: User, attributes: ["name", "email"] }],
-      });
+      return res.status(404).json({ msg: "Product not found." });
     }
 
-    if (!result) {
-      // Jika tidak ditemukan di Perusahaan, cari di Petani
-      result = await DataPetani.findOne({
-        where: { idlahan: uuid },
-        include: [{ model: User, attributes: ["name", "email"] }],
-      });
+    // Fetch land information based on idLahan
+    const lahanInfo = await Petani.findOne({
+      where: { idlahan: result.idLahan },
+    });
+
+    // If land info is not found
+    if (!lahanInfo) {
+      return res.status(404).json({ msg: "Land data not found." });
     }
 
-    if (!result) {
-      // Jika tidak ditemukan di Perusahaan, cari di Petani
-      result = await DataLogistik.findOne({
-        where: { idPengiriman: uuid },
-        include: [{ model: User, attributes: ["name", "email"] }],
-      });
-    }
+    // Final response object
+    const finalResponse = {
+      InformasiOrder: result,
+      LahanInfo: lahanInfo,
+    };
 
-    if (!result) {
-      // Jika tidak ditemukan di Petani, cari di LogisticUser
-      result = await LogisticUser.findOne({
-        where: { uuid: uuid },
-      });
-    }
-
-    if (!result) {
-      // Jika tidak ditemukan di Petani, cari di LogisticUser
-      result = await PerusahaanUsers.findOne({
-        where: { uuid: uuid },
-      });
-    }
-
-    if (!result) {
-      // Jika tidak ditemukan di Petani, cari di LogisticUser
-      result = await OrderPemanen.findOne({
-        where: { uuid: uuid },
-      });
-    }
-    if (!result) {
-      // Jika tidak ditemukan di Petani, cari di PabrikUser
-      result = await PabrikUser.findOne({
-        where: { uuid: uuid },
-      });
-    }
-    if (!result) {
-      // Jika tidak ditemukan di Petani, cari di PetaniUser
-      result = await PetaniUser.findOne({
-        where: { uuid: uuid },
-      });
-    }
-    if (!result) {
-      // Jika tidak ditemukan di Petani, cari di User
-      result = await User.findOne({
-        where: { uuid: uuid },
-      });
-    }
-
-    if (!result) {
-      return res.status(404).json({ msg: "Data tidak ditemukan" });
-    }
-
-    res.status(200).json(result);
+    // Send the final response
+    res.status(200).json(finalResponse);
   } catch (error) {
-    console.error("Error saat mencari data:", error.message);
-    res.status(500).json({ msg: error.message });
+    // Server error handling
+    res.status(500).json({ msg: "Server error: " + error.message });
   }
 };

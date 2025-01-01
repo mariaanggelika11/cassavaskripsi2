@@ -1,23 +1,27 @@
 // File controller: LogistikdasarController.js
-import Logistikdasar from "../models/LogistikDasarModels.js";
+import Logistikdasar from "../models/DasarLogistik.js";
 import Users from "../models/UserModel.js";
 
 // Fungsi untuk membuat data logistik
 const createLogistik = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.userId;
     const logistik = await Logistikdasar.create({ ...req.body, userId });
     res.json(logistik);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
+ 
 // Fungsi untuk mengambil semua data logistik
 const getAllLogistik = async (req, res) => {
   try {
     const logistik = await Logistikdasar.findAll({
-      include: [{ model: Users, as: "user" }],
+      include: [{
+        model: Users,
+        as: "user",
+        attributes: ['uuid', 'name', 'role'], // Ambil hanya uuid, name, dan role
+      }],
     });
     res.json(logistik);
   } catch (error) {
@@ -26,11 +30,16 @@ const getAllLogistik = async (req, res) => {
 };
 
 // Fungsi untuk mengambil data logistik berdasarkan ID
+// Fungsi untuk mengambil data logistik berdasarkan ID
 const getLogistikById = async (req, res) => {
   try {
     const id = req.params.id;
     const logistik = await Logistikdasar.findByPk(id, {
-      include: [{ model: Users, as: "user" }],
+      include: [{
+        model: Users,
+        as: "user",
+        attributes: ['uuid', 'name', 'role'], // Ambil hanya uuid, name, dan role
+      }],
     });
     if (!logistik) {
       res.status(404).json({ message: "Data logistik tidak ditemukan" });

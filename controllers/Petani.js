@@ -1,38 +1,28 @@
-import Petani from "../models/DataPetaniModel.js";
+import Petani from "../models/RencanaTanam.js";
 import User from "../models/UserModel.js";
+import jwt from "jsonwebtoken";
 import { Op } from "sequelize";
+
+const JWT_SECRET = process.env.JWT_SECRET || "bbyifdrdd6r09u8fdxesesedtghbjkjkn";
 
 // Fungsi untuk mendapatkan semua data petani
 export const getPetanis = async (req, res) => {
   try {
     let response;
     if (req.role === "admin" || req.role === "perusahaan") {
-      // Jika pengguna adalah admin atau perusahaan, ambil semua data petani
-      response = await Petani.findAll({
-        include: [
-          {
-            model: User,
-            attributes: ["name", "email"], // Informasi tambahan dari pengguna yang terkait
-          },
-        ],
-        order: [["updatedAt", "DESC"]], // Mengurutkan data berdasarkan updatedAt secara descending
-      });
-    } else if (req.role === "petani") {
-      // Jika pengguna adalah petani, hanya ambil data yang dia buat
       response = await Petani.findAll({
         where: {
-          userId: req.userId, // Asumsi req.userId adalah ID dari pengguna yang login
+          userUuid: req.userUuid,  // Pencarian berdasarkan userUuid
         },
         include: [
           {
             model: User,
-            attributes: ["name", "email"], // Informasi tambahan dari pengguna yang terkait
+            attributes: ["name", "email"],
           },
         ],
-        order: [["updatedAt", "DESC"]], // Mengurutkan data berdasarkan updatedAt secara descending
+        order: [["updatedAt", "DESC"]],
       });
     } else {
-      // Jika role pengguna tidak dikenali atau tidak diizinkan melihat data
       return res.status(403).json({ msg: "Akses Ditolak" });
     }
     res.status(200).json(response);
@@ -42,10 +32,10 @@ export const getPetanis = async (req, res) => {
   }
 };
 
+
 // Fungsi untuk membuat data petani baru
 export const createPetani = async (req, res) => {
   try {
-    // Asumsi: Data dari req.body sudah divalidasi
     const {
       lokasilahan,
       luaslahan,
@@ -63,14 +53,23 @@ export const createPetani = async (req, res) => {
       pendapatanbersih,
     } = req.body;
 
+    // Ambil token dari header Authorization
+    const token = req.header("Authorization").replace("Bearer ", "");
+
+    // Verifikasi token
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const userUuid = decoded.id; // Ambil UUID dari token
+
     // Memeriksa apakah pengguna memiliki peran 'petani' atau 'admin'
-    if (req.role !== "petani" && req.role !== "admin") {
+    const user = await User.findOne({ where: { uuid: userUuid } });
+    if (!user || (user.role !== "petani" && user.role !== "admin")) {
       return res.status(403).json({ msg: "Hanya pengguna dengan role 'petani' atau 'admin' yang dapat membuat data petani." });
     }
 
     // Membuat entri baru di tabel petani
     const newPetani = await Petani.create({
-      userId: req.userId, // Mengaitkan data petani dengan pengguna yang sedang login
+      userId: user.id, // Mengaitkan data petani dengan pengguna yang sedang login
+      userUuid, // Menyimpan UUID pengguna
       lokasilahan,
       luaslahan,
       statuskepemilikanlahan,
@@ -87,7 +86,7 @@ export const createPetani = async (req, res) => {
       pendapatanbersih,
     });
 
-    res.status(201).json({ newPetani, msg: "Product Created Successfully" });
+    res.status(201).json({ newPetani, msg: "Data petani berhasil dibuat" });
   } catch (error) {
     console.error("Error saat membuat data petani:", error.message);
     res.status(500).json({ msg: error.message });
@@ -141,36 +140,24 @@ export const updatePetani = async (req, res) => {
 
 // Fungsi untuk mendapatkan data petani berdasarkan ID
 export const getPetaniById = async (req, res) => {
-  const { id } = req.params; // Mengambil ID dari parameter URL
+  const { id } = req.params;  // Asumsikan id adalah userUuid
 
   try {
-    let response;
-
-    // Menemukan data petani berdasarkan ID
     const petani = await Petani.findOne({
-      where: { id: id },
+      where: { userUuid: id },  // Pencarian berdasarkan userUuid
       include: [
         {
           model: User,
-          attributes: ["name", "email"], // Informasi pengguna yang terkait
+          attributes: ["name", "email"],
         },
       ],
     });
 
-    // Jika petani tidak ditemukan
     if (!petani) {
       return res.status(404).json({ msg: "Data petani tidak ditemukan." });
     }
 
-    // Jika pengguna adalah admin, atau jika pengguna adalah petani dan ID pengguna cocok dengan userId petani
-    if (req.role === "admin" || (req.role === "petani" && req.userId === petani.userId)) {
-      response = petani;
-    } else {
-      // Jika kondisi di atas tidak terpenuhi, pengguna tidak diizinkan melihat data
-      return res.status(403).json({ msg: "Akses ditolak." });
-    }
-
-    res.status(200).json(response);
+    res.status(200).json(petani);
   } catch (error) {
     console.error("Error saat mendapatkan data petani:", error.message);
     res.status(500).json({ msg: error.message });

@@ -19,12 +19,15 @@ export const verifyToken = async (req, res, next) => {
 
     req.userId = user.id;
     req.role = user.role;
+    req.name = user.name;
+    req.email = user.email;
     console.log(`User ${user.email} authenticated successfully`);
     next();
   } catch (error) {
     console.log("Invalid token:", error.message);
     return res.status(401).json({ msg: "Token tidak valid" });
   }
+  
 };
 
 export const adminOnly = async (req, res, next) => {
@@ -51,3 +54,8 @@ export const adminOnly = async (req, res, next) => {
     return res.status(401).json({ msg: "Token tidak valid" });
   }
 };
+
+
+
+
+

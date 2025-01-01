@@ -34,8 +34,12 @@ const Petani = db.define(
         notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
       },
     },
+    userUuid: {
+      type: DataTypes.STRING, // Pastikan ini sesuai dengan tipe UUID Anda
+      allowNull: false,
+    },
     lokasilahan: DataTypes.STRING, // Tipe data string
-    luaslahan: DataTypes.STRING, // Tipe data string
+    luaslahan: DataTypes.INTEGER, // Tipe data string
     statuskepemilikanlahan: DataTypes.STRING, // Tipe data string
     periodeTanamMulai: {
       type: DataTypes.DATEONLY, // Tipe data tanggal (hanya tanggal, tanpa waktu)
@@ -51,12 +55,23 @@ const Petani = db.define(
         notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
       },
     },
-    varietassingkong: DataTypes.STRING, // Tipe data string
-    estimasiproduksi: DataTypes.STRING, // Tipe data string
-    produksiaktual: DataTypes.STRING, // Tipe data string
+    varietassingkong: {
+      type: DataTypes.STRING, // Tipe data string
+      validate: {
+        isIn: [['Grade A', 'Grade B', 'Grade C']] // Validasi agar hanya menerima Grade A, Grade B, dan Grade C
+      }
+    },
+    estimasiproduksi: {
+      type: DataTypes.INTEGER,
+      allowNull: false, // Tambahkan jika tidak boleh null
+      validate: {
+        notEmpty: true, // Pastikan nilainya tidak kosong
+        isInt: true, // Validasi bahwa nilai harus integer
+      },
+    },
     catatantambahan: DataTypes.STRING, // Tipe data string
     jenispupuk: DataTypes.STRING, // Tipe data string
-    jumlahpupuk: DataTypes.STRING, // Tipe data string
+    jumlahpupuk: DataTypes.INTEGER, // Tipe data string
   },
   {
     freezeTableName: true, // Nama tabel tidak akan diubah secara otomatis menjadi bentuk jamak oleh Sequelize

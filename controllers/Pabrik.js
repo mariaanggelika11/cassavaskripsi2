@@ -1,4 +1,4 @@
-import Pabrik from "../models/DataPabrikModel.js"; // Import model Pabrik dari path yang sesuai
+import Pabrik from "../models/DasarPabrik.js"; // Import model Pabrik dari path yang sesuai
 import User from "../models/UserModel.js"; // Import model User dari path yang sesuai
 
 // Fungsi untuk mendapatkan semua data pabrik
@@ -87,9 +87,13 @@ export const createPabrik = async (req, res) => {
       return res.status(403).json({ msg: "Hanya pengguna dengan role 'admin' atau 'pabrik' yang dapat membuat data pabrik." });
     }
 
+    // Use req.userId directly as the pabrikUuid
+    const pabrikUuid = req.email; // Assign userId as pabrikUuid
+
     const newPabrik = await Pabrik.create({
       ...data,
       userId: req.userId, // Mengaitkan data pabrik dengan userId dari pengguna yang login
+      pabrikUuid, // Assign the userId directly as the pabrikUuid
     });
 
     res.status(201).json({ newPabrik, msg: "Data pabrik berhasil dibuat." }); // Berikan respons dengan data pabrik baru yang dibuat
