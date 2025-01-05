@@ -11,9 +11,6 @@ export const getPetanis = async (req, res) => {
     let response;
     if (req.role === "admin" || req.role === "perusahaan") {
       response = await Petani.findAll({
-        where: {
-          userUuid: req.userUuid,  // Pencarian berdasarkan userUuid
-        },
         include: [
           {
             model: User,
@@ -48,9 +45,6 @@ export const createPetani = async (req, res) => {
       catatantambahan,
       jenispupuk,
       jumlahpupuk,
-      hargajual,
-      totalpendapatan,
-      pendapatanbersih,
     } = req.body;
 
     // Ambil token dari header Authorization
@@ -81,9 +75,6 @@ export const createPetani = async (req, res) => {
       catatantambahan,
       jenispupuk,
       jumlahpupuk,
-      hargajual,
-      totalpendapatan,
-      pendapatanbersih,
     });
 
     res.status(201).json({ newPetani, msg: "Data petani berhasil dibuat" });
@@ -126,9 +117,6 @@ export const updatePetani = async (req, res) => {
       catatantambahan,
       jenispupuk,
       jumlahpupuk,
-      hargajual,
-      totalpendapatan,
-      pendapatanbersih,
     });
 
     res.status(200).json({ msg: "Data petani berhasil diupdate" });

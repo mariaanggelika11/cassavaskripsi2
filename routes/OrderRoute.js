@@ -1,5 +1,5 @@
 import express from "express";
-import { getProducts, getProductById, createProduct, updateProduct, deleteProduct} from "../controllers/Order.js";
+import { getProducts, getUnassignedProducts, getProductById, createProduct,  deleteProduct, getProductsByRole, inputTransaksi, approveOrder} from "../controllers/Order.js";
 import { verifyToken } from "../middleware/AuthUser.js"; // Menggunakan verifyToken dari AuthUser.js
 
 const router = express.Router();
@@ -7,14 +7,22 @@ const router = express.Router();
 // Rute untuk mendapatkan semua produk
 router.get("/products", verifyToken, getProducts);
 
+// Rute untuk lihat order yg masuk untuk perusahaan pabrik dan logistik
+router.get("/productorder", verifyToken, getUnassignedProducts);
+
+// Rute untuk mendapatkan produk berdasarkan yg di acc/milik dia
+router.get("/productrole", verifyToken, getProductsByRole);
+
 // Rute untuk mendapatkan produk berdasarkan ID
 router.get("/products/:id", verifyToken, getProductById);
 
 // Rute untuk membuat produk baru
 router.post("/products", verifyToken, createProduct);
 
-// Rute untuk memperbarui produk
-router.patch("/products/:id", verifyToken, updateProduct);
+// Rute untuk menyetujui profuk
+router.patch("/products/:id", verifyToken, approveOrder);
+// Rute input data transaksi
+router.patch("/inputtransaksi/:id", verifyToken, inputTransaksi)
 
 // Rute untuk menghapus produk
 router.delete("/products/:id", verifyToken, deleteProduct);

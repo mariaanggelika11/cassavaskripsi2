@@ -29,27 +29,69 @@ const getAllLogistik = async (req, res) => {
   }
 };
 
-// Fungsi untuk mengambil data logistik berdasarkan ID
-// Fungsi untuk mengambil data logistik berdasarkan ID
+// Fungsi untuk mengambil data logistik berdasarkan UUID
 const getLogistikById = async (req, res) => {
   try {
-    const id = req.params.id;
-    const logistik = await Logistikdasar.findByPk(id, {
-      include: [{
-        model: Users,
-        as: "user",
-        attributes: ['uuid', 'name', 'role'], // Ambil hanya uuid, name, dan role
-      }],
-    });
-    if (!logistik) {
-      res.status(404).json({ message: "Data logistik tidak ditemukan" });
-    } else {
-      res.json(logistik);
+    const { id } = req.params; // Ambil UUID langsung dari parameter URL
+
+    if (!id) {
+      return res.status(400).json({ message: "UUID tidak disediakan dalam parameter URL" });
     }
+
+    const logistik = await Logistikdasar.findOne({
+      where: { id }, // Pastikan id benar-benar UUID
+      include: [
+        {
+          model: Users,
+          as: "user",
+          attributes: ['uuid', 'name', 'role'], // Ambil hanya uuid, name, dan role
+        },
+      ],
+    });
+
+    if (!logistik) {
+      return res.status(404).json({ message: "Data logistik tidak ditemukan" });
+    }
+
+    res.json(logistik); // Kirim data logistik sebagai respons
   } catch (error) {
+    console.error("Error saat mengambil data logistik:", error.message);
     res.status(500).json({ message: error.message });
   }
 };
+
+// Fungsi untuk mengambil data logistik berdasarkan userId
+const getLogistikByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params; // Ambil userId dari parameter URL
+
+    if (!userId) {
+      return res.status(400).json({ message: "userId tidak disediakan dalam parameter URL" });
+    }
+
+    const logistik = await Logistikdasar.findAll({
+      where: { userId },
+      include: [
+        {
+          model: Users,
+          as: "user",
+          attributes: ['uuid', 'name', 'role'], // Ambil hanya uuid, name, dan role
+        },
+      ],
+    });
+
+    if (logistik.length === 0) {
+      return res.status(404).json({ message: "Data logistik tidak ditemukan untuk userId ini" });
+    }
+
+    res.json(logistik); // Kirim data logistik sebagai respons
+  } catch (error) {
+    console.error("Error saat mengambil data logistik berdasarkan userId:", error.message);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
 
 // Fungsi untuk mengupdate data logistik
 const updateLogistik = async (req, res) => {
@@ -83,4 +125,4 @@ const deleteLogistik = async (req, res) => {
   }
 };
 
-export { createLogistik, getAllLogistik, getLogistikById, updateLogistik, deleteLogistik };
+export { createLogistik, getAllLogistik,getLogistikByUserId, getLogistikById, updateLogistik, deleteLogistik };

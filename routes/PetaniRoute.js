@@ -19,9 +19,9 @@ router.put("/petani/:id", verifyToken, updatePetani);
 router.delete("/petani/:id", verifyToken, deletePetani);
 
 // Route untuk mendapatkan semua ID lahan dari semua petani
-router.get('/lahan', getAllLahanOptions);
+router.get('/lahan',verifyToken, getAllLahanOptions);
 
 // Route untuk mendapatkan data dari ID lahan yang spesifik
-router.get('/lahan/:idLahan', getLahanById);
+router.get('/lahan/:idLahan',verifyToken, getLahanById);
 
 export default router;

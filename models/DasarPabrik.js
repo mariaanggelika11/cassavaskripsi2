@@ -57,7 +57,7 @@ const Pabrik = db.define(
 
 
 // Membuat relasi antara Users dan Pabrik
-Users.hasMany(Pabrik); // User memiliki banyak data pabrik
+Users.hasOne(Pabrik); // User memiliki banyak data pabrik
 Pabrik.belongsTo(Users, { foreignKey: "userId" }); // Data pabrik milik satu user, dengan userId sebagai foreign key
 
 export default Pabrik; // Mengekspor model Pabrik agar bisa digunakan di bagian lain dari aplikasi

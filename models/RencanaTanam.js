@@ -69,7 +69,7 @@ const Petani = db.define(
         isInt: true, // Validasi bahwa nilai harus integer
       },
     },
-    catatantambahan: DataTypes.STRING, // Tipe data string
+    catatantambahan: DataTypes.STRING(1500), // Tipe data string
     jenispupuk: DataTypes.STRING, // Tipe data string
     jumlahpupuk: DataTypes.INTEGER, // Tipe data string
   },

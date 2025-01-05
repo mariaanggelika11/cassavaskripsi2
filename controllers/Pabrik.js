@@ -87,19 +87,29 @@ export const createPabrik = async (req, res) => {
       return res.status(403).json({ msg: "Hanya pengguna dengan role 'admin' atau 'pabrik' yang dapat membuat data pabrik." });
     }
 
-    // Use req.userId directly as the pabrikUuid
-    const pabrikUuid = req.email; // Assign userId as pabrikUuid
+    // Cek apakah user sudah memiliki data pabrik
+    const existingPabrik = await Pabrik.findOne({
+      where: { userId: req.userId }, // Mencari data pabrik berdasarkan userId
+    });
 
+    if (existingPabrik) {
+      return res.status(400).json({ msg: "Setiap pengguna hanya dapat memiliki satu data pabrik." });
+    }
+
+    // Gunakan req.userId sebagai pabrikUuid
+    const pabrikUuid = req.email; // Menggunakan email sebagai pabrikUuid
+
+    // Membuat data pabrik baru
     const newPabrik = await Pabrik.create({
       ...data,
       userId: req.userId, // Mengaitkan data pabrik dengan userId dari pengguna yang login
-      pabrikUuid, // Assign the userId directly as the pabrikUuid
+      pabrikUuid, // Menetapkan email sebagai pabrikUuid
     });
 
-    res.status(201).json({ newPabrik, msg: "Data pabrik berhasil dibuat." }); // Berikan respons dengan data pabrik baru yang dibuat
+    res.status(201).json({ newPabrik, msg: "Data pabrik berhasil dibuat." }); // Memberikan respons dengan data pabrik baru yang dibuat
   } catch (error) {
     console.error("Error saat membuat data pabrik:", error.message); // Log error ke console
-    res.status(500).json({ msg: error.message }); // Berikan respons error dengan pesan
+    res.status(500).json({ msg: error.message }); // Memberikan respons error dengan pesan
   }
 };
 
@@ -109,19 +119,20 @@ export const updatePabrik = async (req, res) => {
   const data = req.body; // Mengambil data dari request body
 
   try {
-    if (req.role !== "admin" && req.role !== "pabrik") {
-      return res.status(403).json({ msg: "Hanya pengguna dengan role 'admin' atau 'pabrik' yang dapat mengupdate data pabrik." });
+    // Validasi role pengguna
+    if (req.role !== "pabrik") {
+      return res.status(403).json({ msg: "Hanya pengguna dengan role 'pabrik' yang dapat mengupdate data pabrik." });
     }
 
-    let condition = req.role === "admin" ? { id: id } : { id: id, userId: req.userId }; // Tentukan kondisi berdasarkan peran pengguna
-
-    const pabrikToUpdate = await Pabrik.findOne({ where: condition }); // Cari data pabrik yang akan diperbarui
+    // Cari data pabrik yang akan diperbarui berdasarkan userId yang sedang login
+    const pabrikToUpdate = await Pabrik.findOne({ where: { id: id, userId: req.userId } });
 
     if (!pabrikToUpdate) {
       return res.status(404).json({ msg: "Data pabrik tidak ditemukan atau Anda tidak memiliki hak akses untuk mengupdate data ini." });
     }
 
-    await pabrikToUpdate.update(data); // Perbarui data pabrik
+    // Perbarui data pabrik
+    await pabrikToUpdate.update(data);
 
     res.status(200).json({ msg: "Data pabrik berhasil diupdate." }); // Berikan respons sukses
   } catch (error) {
@@ -130,13 +141,14 @@ export const updatePabrik = async (req, res) => {
   }
 };
 
+
 // Fungsi untuk menghapus data pabrik
 export const deletePabrik = async (req, res) => {
   const { id } = req.params; // Mengambil ID dari parameter URL
 
   try {
-    if (req.role !== "admin") {
-      return res.status(403).json({ msg: "Hanya admin yang dapat menghapus data pabrik." });
+    if (req.role !== "admin" && req.role !== "pabrik") {
+      return res.status(403).json({ msg: "Hanya admin dan pabrik yang dapat menghapus data pabrik." });
     }
 
     const deleted = await Pabrik.destroy({
