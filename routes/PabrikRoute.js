@@ -4,7 +4,7 @@ import { verifyToken } from "../middleware/AuthUser.js"; // Menggunakan verifyTo
 
 const router = express.Router();
 
-// Route untuk mendapatkan semua data pabrik
+// Route untuk mendapatkan semua data pabrik (Hanya untuk dia sendiri, tapi perusahaan dan admin bisa semua)
 router.get("/pabrik", verifyToken, getPabrik);
 // Route untuk mendapatkan data pabrik berdasarkan Id
 router.get("/pabrik/:id", verifyToken, getPabrikById);

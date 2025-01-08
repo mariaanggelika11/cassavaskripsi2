@@ -1,17 +1,20 @@
 import express from "express";
-import { getProducts, getUnassignedProducts, getProductById, createProduct,  deleteProduct, getProductsByRole, inputTransaksi, approveOrder} from "../controllers/Order.js";
+import { getProducts, getProductById, createProduct,  deleteProduct, inputTransaksi, approveOrder, getOrderMasuk, getOrderBerlangsung, getHistoryOrder} from "../controllers/Order.js";
 import { verifyToken } from "../middleware/AuthUser.js"; // Menggunakan verifyToken dari AuthUser.js
 
 const router = express.Router();
 
-// Rute untuk mendapatkan semua produk
+// Rute untuk mendapatkan semua produk TIDAK PERLU DIPAKAI
 router.get("/products", verifyToken, getProducts);
 
 // Rute untuk lihat order yg masuk untuk perusahaan pabrik dan logistik
-router.get("/productorder", verifyToken, getUnassignedProducts);
+router.get("/ordermasuk", verifyToken, getOrderMasuk);
 
-// Rute untuk mendapatkan produk berdasarkan yg di acc/milik dia
-router.get("/productrole", verifyToken, getProductsByRole);
+// Rute untuk mendapatkan produk berdasarkan yg di acc/milik dia yang belum "order selesai"
+router.get("/orderberlangsung", verifyToken, getOrderBerlangsung);
+
+// Rute untuk mendapatkan produk yang sudah "order selesai" berdasarkan yg dia acc
+router.get("/historyorder", verifyToken, getHistoryOrder);
 
 // Rute untuk mendapatkan produk berdasarkan ID
 router.get("/products/:id", verifyToken, getProductById);
@@ -19,8 +22,9 @@ router.get("/products/:id", verifyToken, getProductById);
 // Rute untuk membuat produk baru
 router.post("/products", verifyToken, createProduct);
 
-// Rute untuk menyetujui profuk
+// Rute untuk menyetujui produk
 router.patch("/products/:id", verifyToken, approveOrder);
+
 // Rute input data transaksi
 router.patch("/inputtransaksi/:id", verifyToken, inputTransaksi)
 

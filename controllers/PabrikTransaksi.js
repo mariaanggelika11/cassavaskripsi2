@@ -79,6 +79,50 @@ export const getTransaksiPBK = async (req, res) => {
     }
   };
   
+// Fungsi untuk mendapatkan data transaksiPBK berdasarkan userId
+export const getTransaksiPBKByUserId = async (req, res) => {
+  const { userId } = req.params; // Ambil userId dari parameter URL
+
+  try {
+    // Validasi apakah userId ada
+    if (!userId) {
+      return res.status(400).json({ message: "userId tidak disediakan dalam parameter URL" });
+    }
+
+    // Validasi akses berdasarkan peran pengguna
+    if (
+      req.role !== "admin" && // Admin memiliki akses penuh
+      req.role !== "perusahaan" && // Perusahaan juga memiliki akses penuh
+      req.userId !== parseInt(userId) // Pengguna logistik hanya dapat mengakses data miliknya
+    ) {
+      return res.status(403).json({ message: "Anda tidak memiliki izin untuk mengakses data ini." });
+    }
+
+    // Temukan data transaksiPBK berdasarkan userId
+    const transaksiPBK = await TransaksiPBK.findAll({
+      where: { userId: userId },
+      include: [
+        {
+          model: User,
+          attributes: ["name", "email"], // Sertakan informasi pengguna yang terkait
+        },
+      ],
+    });
+
+    // Jika data transaksiPBK tidak ditemukan
+    if (!transaksiPBK || transaksiPBK.length === 0) {
+      return res.status(404).json({ message: "Data transaksiPBK tidak ditemukan untuk userId ini." });
+    }
+
+    // Kirim data yang diambil sebagai respons
+    return res.status(200).json(transaksiPBK);
+  } catch (error) {
+    console.error("Error saat mendapatkan data transaksiPBK:", error.message);
+    res.status(500).json({ message: "Terjadi kesalahan saat mengambil data transaksiPBK." });
+  }
+};
+
+
   // Fungsi untuk membuat data transaksiPBK baru
   export const createTransaksiPBK = async (req, res) => {
     try {

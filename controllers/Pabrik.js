@@ -40,14 +40,11 @@ export const getPabrik = async (req, res) => {
     res.status(500).json({ msg: error.message }); // Berikan respons error dengan pesan
   }
 };
-
 // Fungsi untuk mendapatkan data pabrik berdasarkan ID
 export const getPabrikById = async (req, res) => {
   const { id } = req.params; // Mengambil ID dari parameter URL
 
   try {
-    let response;
-
     // Menemukan data pabrik berdasarkan ID
     const pabrik = await Pabrik.findOne({
       where: { id: id },
@@ -64,20 +61,23 @@ export const getPabrikById = async (req, res) => {
       return res.status(404).json({ msg: "Data pabrik tidak ditemukan." });
     }
 
-    // Jika pengguna adalah admin, atau jika pengguna adalah pabrik dan ID pengguna cocok dengan userId pabrik
-    if (req.role === "admin" || (req.role === "pabrik" && req.userId === pabrik.userId)) {
-      response = pabrik; // Berikan respons dengan data pabrik
-    } else {
-      // Jika kondisi di atas tidak terpenuhi, pengguna tidak diizinkan melihat data
-      return res.status(403).json({ msg: "Akses ditolak." });
+    // Jika pengguna adalah admin, perusahaan, atau pengguna pabrik dengan akses ke pabrik miliknya
+    if (
+      req.role === "admin" || 
+      req.role === "perusahaan" || 
+      (req.role === "pabrik" && req.userId === pabrik.userId)
+    ) {
+      return res.status(200).json(pabrik); // Berikan respons dengan data pabrik
     }
 
-    res.status(200).json(response); // Berikan respons dengan data yang ditemukan
+    // Jika pengguna tidak diizinkan melihat data
+    return res.status(403).json({ msg: "Akses ditolak. Anda tidak memiliki izin untuk mengakses data ini." });
   } catch (error) {
     console.error("Error saat mendapatkan data pabrik:", error.message); // Log error ke console
     res.status(500).json({ msg: error.message }); // Berikan respons error dengan pesan
   }
 };
+
 
 // Fungsi untuk membuat data pabrik baru
 export const createPabrik = async (req, res) => {

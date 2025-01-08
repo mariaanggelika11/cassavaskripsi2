@@ -91,6 +91,7 @@ const getAllPabrikproduksi = async (req, res) => {
   }
 };
 
+
 // Fungsi untuk mengambil data pabrik produksi berdasarkan ID
 const getPabrikproduksiById = async (req, res) => {
   try {
@@ -105,6 +106,44 @@ const getPabrikproduksiById = async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// Fungsi untuk mengambil data pabrik produksi berdasarkan userId
+const getPabrikproduksiUserId = async (req, res) => {
+  try {
+    const { userId } = req.params; // Ambil userId dari parameter URL
+
+    // Validasi apakah userId ada
+    if (!userId) {
+      return res.status(400).json({ message: "userId tidak disediakan dalam parameter URL" });
+    }
+
+    // Validasi akses berdasarkan peran pengguna
+    if (
+      req.role !== "admin" && // Admin memiliki akses penuh
+      req.role !== "perusahaan" && // Perusahaan juga memiliki akses
+      req.userId !== parseInt(userId) // Pengguna pabrik hanya dapat mengakses data miliknya
+    ) {
+      return res.status(403).json({ message: "Anda tidak memiliki izin untuk mengakses data ini." });
+    }
+
+    // Cari data pabrik produksi berdasarkan userId
+    const pabrikproduksi = await Pabrikproduksi.findAll({
+      where: { userId },
+      include: [{ model: Users, as: "user" }],
+    });
+
+    // Jika data tidak ditemukan
+    if (!pabrikproduksi || pabrikproduksi.length === 0) {
+      return res.status(404).json({ message: "Data pabrik produksi tidak ditemukan untuk userId ini." });
+    }
+
+    // Kirimkan data pabrik produksi
+    res.status(200).json(pabrikproduksi);
+  } catch (error) {
+    console.error("Error saat mengambil data pabrik produksi:", error.message);
+    res.status(500).json({ message: "Terjadi kesalahan saat mengambil data pabrik produksi." });
   }
 };
 
@@ -140,4 +179,4 @@ const deletePabrikproduksi = async (req, res) => {
   }
 };
 
-export {  createPabrikproduksi, getAllPabrikproduksi, getPabrikproduksiById, updatePabrikproduksi, deletePabrikproduksi };
+export {  createPabrikproduksi, getAllPabrikproduksi, getPabrikproduksiById, getPabrikproduksiUserId, updatePabrikproduksi, deletePabrikproduksi };

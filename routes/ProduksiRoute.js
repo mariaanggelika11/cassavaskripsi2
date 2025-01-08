@@ -1,6 +1,6 @@
 // File routes: pabrikproduksi.js
 import express from 'express';
-import { createPabrikproduksi, getAllPabrikproduksi, getPabrikproduksiById, updatePabrikproduksi, deletePabrikproduksi } from "../controllers/ProduksiPBK.js";
+import { createPabrikproduksi, getAllPabrikproduksi, getPabrikproduksiById, getPabrikproduksiUserId, updatePabrikproduksi, deletePabrikproduksi } from "../controllers/ProduksiPBK.js";
 import { verifyToken } from '../middleware/AuthUser.js';
 const router = express.Router();
 
@@ -11,7 +11,10 @@ router.post('/produksi',verifyToken, createPabrikproduksi);
 router.get('/produksi',verifyToken, getAllPabrikproduksi);
 
 // Route untuk mengambil data pabrik produksi berdasarkan ID
-router.get('/produksi/:id',verifyToken, getPabrikproduksiById);
+router.get('/produksiid/:id',verifyToken, getPabrikproduksiById);
+
+//Route utnuk mengambil data pabrik berdasarkan userid
+router.get("/produksiuser/:userId", verifyToken, getPabrikproduksiUserId);
 
 // Route untuk mengupdate data pabrik produksi
 router.put('/produksi/:id',verifyToken, updatePabrikproduksi);

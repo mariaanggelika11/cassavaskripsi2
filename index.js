@@ -12,7 +12,7 @@ import PabrikRoute from "./routes/PabrikRoute.js";
 import ProduksiRoute from "./routes/ProduksiRoute.js";
 import PerusahaanRoute from "./routes/PerusahaanRoute.js";
 import SearchRoute from "./routes/SearchRoute.js";
-// import TransaksiPabrikR from "./routes/TransaksiPabrikR.js";
+import TransaksiPBK from "./routes/TransaksiPabrikR.js";
 import limbahpetaniR from "./routes/LimbahPetaniR.js";
 import TransaksiLogistikRoute from "./routes/TransaksiLogistikRoute.js";
 import TransaksiPerusahaanR from "./routes/TransaksiPerusahaanR.js";
@@ -113,7 +113,7 @@ app.use(SearchRoute);
 app.use(PerusahaanRoute);
 app.use(TransaksiLogistikRoute)
 app.use(limbahpetaniR)
-// app.use(TransaksiPabrikR);
+app.use(TransaksiPBK)
 app.use(TransaksiPerusahaanR)
 
 app.listen(process.env.APP_PORT, () => {

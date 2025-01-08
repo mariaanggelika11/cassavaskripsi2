@@ -51,7 +51,7 @@ export const getProducts = async (req, res) => {
 
 
 // Controller untuk mendapatkan produk yang belum terisi nama dan email untuk perusahaan, pabrik, dan logistik (untuk menyetujui order)
-export const getUnassignedProducts = async (req, res) => {
+export const getOrderMasuk = async (req, res) => {
   try {
     let response;
 
@@ -81,7 +81,7 @@ export const getUnassignedProducts = async (req, res) => {
         ],
       });
     } else if (req.role === "pabrik") {
-      // Produk yang belum memiliki pabrik
+      // Produk yang memiliki namaPerusahaan tetapi belum memiliki pabrik
       response = await Product.findAll({
         attributes: [
           "uuid",
@@ -96,7 +96,12 @@ export const getUnassignedProducts = async (req, res) => {
           "emailPerusahaan",
         ],
         where: {
-          [Op.or]: [{ namaPabrik: null }, { emailPabrik: null }],
+          [Op.and]: [
+            { namaPerusahaan: { [Op.ne]: null } }, // Pastikan sudah ada namaPerusahaan
+            { emailPerusahaan: { [Op.ne]: null } }, // Pastikan sudah ada emailPerusahaan
+            { namaPabrik: null }, // Belum ada namaPabrik
+            { emailPabrik: null }, // Belum ada emailPabrik
+          ],
         },
         include: [
           {
@@ -106,7 +111,7 @@ export const getUnassignedProducts = async (req, res) => {
         ],
       });
     } else if (req.role === "logistik") {
-      // Produk yang belum memiliki logistik
+      // Produk yang memiliki namaPabrik tetapi belum memiliki logistik
       response = await Product.findAll({
         attributes: [
           "uuid",
@@ -121,7 +126,12 @@ export const getUnassignedProducts = async (req, res) => {
           "emailPabrik",
         ],
         where: {
-          [Op.or]: [{ namaLogistik: null }, { emailLogistik: null }],
+          [Op.and]: [
+            { namaPabrik: { [Op.ne]: null } }, // Pastikan sudah ada namaPabrik
+            { emailPabrik: { [Op.ne]: null } }, // Pastikan sudah ada emailPabrik
+            { namaLogistik: null }, // Belum ada namaLogistik
+            { emailLogistik: null }, // Belum ada emailLogistik
+          ],
         },
         include: [
           {
@@ -129,6 +139,34 @@ export const getUnassignedProducts = async (req, res) => {
             attributes: ["name", "email"], // Sertakan informasi tambahan dari pengguna
           },
         ],
+      });
+    } else if (req.role === "admin") {
+      // Admin melihat semua order yang belum memiliki perusahaan, pabrik, atau logistik
+      response = await Product.findAll({
+        attributes: [
+          "uuid",
+          "tanggalPemanenan",
+          "statusOrder",
+          "varietasSingkong",
+          "estimasiBerat",
+          "estimasiHarga",
+          "namaLogistik",
+          "emailLogistik",
+          "namaPabrik",
+          "emailPabrik",
+          "namaPerusahaan",
+          "emailPerusahaan",
+        ],
+        where: {
+          [Op.or]: [
+            { namaPerusahaan: null },
+            { emailPerusahaan: null },
+            { namaPabrik: null },
+            { emailPabrik: null },
+            { namaLogistik: null },
+            { emailLogistik: null },
+          ],
+        },
       });
     } else {
       // Role tidak valid
@@ -142,63 +180,281 @@ export const getUnassignedProducts = async (req, res) => {
 };
 
 // Controller untuk mendapatkan produk berdasarkan kondisi role(HISTORY PANEN SETIAP ROLE hanya milik dia sendiri yg dia acc)
-export const getProductsByRole = async (req, res) => {
+export const getOrderBerlangsung = async (req, res) => {
   try {
     let response;
 
     // Periksa role pengguna
     if (req.role === "logistik") {
       response = await Product.findAll({
-        attributes: ["uuid", "tanggalPemanenan", "statusOrder", "varietasSingkong", "estimasiBerat", "estimasiHarga", "namaPerusahaan", "emailPerusahaan","namaLogistik", "emailLogistik","namaPabrik", "emailPabrik"],
+        attributes: [
+          "uuid",
+          "tanggalPemanenan",
+          "statusOrder",
+          "varietasSingkong",
+          "estimasiBerat",
+          "estimasiHarga",
+          "namaPerusahaan",
+          "emailPerusahaan",
+          "namaLogistik",
+          "emailLogistik",
+          "namaPabrik",
+          "emailPabrik",
+        ],
         where: {
-          namaLogistik: req.name, // Sesuai dengan nama logistik yang login
-          emailLogistik: req.email, // Sesuai dengan email logistik yang login
+          namaLogistik: req.name,
+          emailLogistik: req.email,
+          statusOrder: {
+            [Op.ne]: "order selesai", // Tidak mengambil data dengan status selesai
+          },
         },
         include: [
           {
             model: User,
-            attributes: ["name", "email"], // Sertakan informasi pengguna
+            attributes: ["name", "email"],
+          },
+          {
+            model: Logistik,
+            attributes: [
+              "orderPemanenUuid",
+              "tanggalPengiriman",
+              "waktuPengiriman",
+              "estimasiWaktuTiba",
+              "aktualWaktuTiba",
+              "catatanEfisiensiRute",
+              "biayaTransportasi",
+              "kondisiPengiriman",
+              "catatanDariPenerima",
+            ],
+            required: false,
           },
         ],
       });
     } else if (req.role === "perusahaan") {
       response = await Product.findAll({
-        attributes: ["uuid", "tanggalPemanenan", "statusOrder", "varietasSingkong", "estimasiBerat", "estimasiHarga", "namaPerusahaan", "emailPerusahaan","namaLogistik", "emailLogistik","namaPabrik", "emailPabrik"],
+        attributes: [
+          "uuid",
+          "tanggalPemanenan",
+          "statusOrder",
+          "varietasSingkong",
+          "estimasiBerat",
+          "estimasiHarga",
+          "namaPerusahaan",
+          "emailPerusahaan",
+          "namaLogistik",
+          "emailLogistik",
+          "namaPabrik",
+          "emailPabrik",
+        ],
         where: {
-          namaPerusahaan: req.name, // Sesuai dengan nama perusahaan yang login
-          emailPerusahaan: req.email, // Sesuai dengan email perusahaan yang login
+          namaPerusahaan: req.name,
+          emailPerusahaan: req.email,
+          statusOrder: {
+            [Op.ne]: "order selesai",
+          },
         },
         include: [
           {
             model: User,
-            attributes: ["name", "email"], // Sertakan informasi pengguna
+            attributes: ["name", "email"],
+          },
+          {
+            model: Logistik,
+            attributes: [
+              "orderPemanenUuid",
+              "tanggalPengiriman",
+              "waktuPengiriman",
+              "estimasiWaktuTiba",
+              "aktualWaktuTiba",
+              "catatanEfisiensiRute",
+              "biayaTransportasi",
+              "kondisiPengiriman",
+              "catatanDariPenerima",
+            ],
+            required: false,
+          },
+          {
+            model: TransaksiPR,
+            attributes: ["orderPemanenUuid", "hargaaktual", "catatanharga", "tanggalselesai"],
+            required: false,
+          },
+          {
+            model: TransaksiPBK,
+            attributes: ["orderPemanenUuid", "tanggalPenerimaan", "beratTotalDiterima", "catatanKualitas", "evaluasiKualitas"],
+            required: false,
+          },
+          {
+            model: limbahpetani,
+            attributes: [
+              "beratLimbahBatang",
+              "catatanLimbahBatang",
+              "beratLimbahDaun",
+              "catatanLimbahDaun",
+              "beratLimbahAkar",
+              "catatanLimbahAkar",
+            ],
+            required: false,
           },
         ],
       });
     } else if (req.role === "pabrik") {
       response = await Product.findAll({
-        attributes: ["uuid", "tanggalPemanenan", "statusOrder", "varietasSingkong", "estimasiBerat", "estimasiHarga",  "namaPerusahaan", "emailPerusahaan","namaLogistik", "emailLogistik","namaPabrik", "emailPabrik"],
+        attributes: [
+          "uuid",
+          "tanggalPemanenan",
+          "statusOrder",
+          "varietasSingkong",
+          "estimasiBerat",
+          "estimasiHarga",
+          "namaPerusahaan",
+          "emailPerusahaan",
+          "namaLogistik",
+          "emailLogistik",
+          "namaPabrik",
+          "emailPabrik",
+        ],
         where: {
-          namaPabrik: req.nama, // Sesuai dengan nama pabrik yang login
-          emailPabrik: req.email, // Sesuai dengan email pabrik yang login
+          namaPabrik: req.name,
+          emailPabrik: req.email,
+          statusOrder: {
+            [Op.ne]: "order selesai",
+          },
         },
         include: [
           {
             model: User,
-            attributes: ["name", "email"], // Sertakan informasi pengguna
+            attributes: ["name", "email"],
+          },
+          {
+            model: TransaksiPBK,
+            attributes: ["orderPemanenUuid", "tanggalPenerimaan", "beratTotalDiterima", "catatanKualitas", "evaluasiKualitas"],
+            required: false,
           },
         ],
       });
     } else if (req.role === "petani") {
       response = await Product.findAll({
-        attributes: ["uuid", "idLahan", "tanggalPemanenan", "statusOrder", "varietasSingkong", "estimasiBerat", "estimasiHarga"],
+        attributes: [
+          "uuid",
+          "idLahan",
+          "tanggalPemanenan",
+          "statusOrder",
+          "varietasSingkong",
+          "estimasiBerat",
+          "estimasiHarga",
+        ],
         where: {
-          userId: req.userId, // Ambil data berdasarkan userId petani yang login
+          userId: req.userId,
+          statusOrder: {
+            [Op.ne]: "order selesai",
+          },
         },
         include: [
           {
             model: User,
-            attributes: ["name", "email"], // Sertakan informasi pengguna
+            attributes: ["name", "email"],
+          },
+          {
+            model: Logistik,
+            attributes: [
+              "orderPemanenUuid",
+              "tanggalPengiriman",
+              "waktuPengiriman",
+              "estimasiWaktuTiba",
+              "aktualWaktuTiba",
+              "catatanEfisiensiRute",
+              "biayaTransportasi",
+              "kondisiPengiriman",
+              "catatanDariPenerima",
+            ],
+            required: false,
+          },
+          {
+            model: TransaksiPR,
+            attributes: ["orderPemanenUuid", "hargaaktual", "catatanharga", "tanggalselesai"],
+            required: false,
+          },
+          {
+            model: TransaksiPBK,
+            attributes: ["orderPemanenUuid", "tanggalPenerimaan", "beratTotalDiterima", "catatanKualitas", "evaluasiKualitas"],
+            required: false,
+          },
+          {
+            model: limbahpetani,
+            attributes: [
+              "beratLimbahBatang",
+              "catatanLimbahBatang",
+              "beratLimbahDaun",
+              "catatanLimbahDaun",
+              "beratLimbahAkar",
+              "catatanLimbahAkar",
+            ],
+            required: false,
+          },
+        ],
+      });
+    } else if (req.role === "admin") {
+      response = await Product.findAll({
+        attributes: [
+          "uuid",
+          "tanggalPemanenan",
+          "statusOrder",
+          "varietasSingkong",
+          "estimasiBerat",
+          "estimasiHarga",
+          "namaLogistik",
+          "emailLogistik",
+          "namaPabrik",
+          "emailPabrik",
+          "namaPerusahaan",
+          "emailPerusahaan",
+        ],
+        where: {
+          statusOrder: {
+            [Op.ne]: "order selesai", // Semua data dengan status selain selesai
+          },
+        },
+        include: [
+          {
+            model: User,
+            attributes: ["name", "email"],
+          },
+          {
+            model: Logistik,
+            attributes: [
+              "orderPemanenUuid",
+              "tanggalPengiriman",
+              "waktuPengiriman",
+              "estimasiWaktuTiba",
+              "aktualWaktuTiba",
+              "catatanEfisiensiRute",
+              "biayaTransportasi",
+              "kondisiPengiriman",
+              "catatanDariPenerima",
+            ],
+            required: false,
+          },
+          {
+            model: TransaksiPR,
+            attributes: ["orderPemanenUuid", "hargaaktual", "catatanharga", "tanggalselesai"],
+            required: false,
+          },
+          {
+            model: TransaksiPBK,
+            attributes: ["orderPemanenUuid", "tanggalPenerimaan", "beratTotalDiterima", "catatanKualitas", "evaluasiKualitas"],
+            required: false,
+          },
+          {
+            model: limbahpetani,
+            attributes: [
+              "beratLimbahBatang",
+              "catatanLimbahBatang",
+              "beratLimbahDaun",
+              "catatanLimbahDaun",
+              "beratLimbahAkar",
+              "catatanLimbahAkar",
+            ],
+            required: false,
           },
         ],
       });
@@ -210,9 +466,303 @@ export const getProductsByRole = async (req, res) => {
     // Kirimkan respons
     res.status(200).json(response);
   } catch (error) {
-    res.status(500).json({ msg: error.message }); // Tangani kesalahan server
+    res.status(500).json({ msg: error.message });
   }
 };
+
+
+export const getHistoryOrder = async (req, res) => {
+  try {
+    let response;
+
+    // Periksa role pengguna
+    if (req.role === "logistik") {
+      response = await Product.findAll({
+        attributes: [
+          "uuid",
+          "tanggalPemanenan",
+          "statusOrder",
+          "varietasSingkong",
+          "estimasiBerat",
+          "estimasiHarga",
+          "namaPerusahaan",
+          "emailPerusahaan",
+          "namaLogistik",
+          "emailLogistik",
+          "namaPabrik",
+          "emailPabrik",
+        ],
+        where: {
+          namaLogistik: req.name,
+          emailLogistik: req.email,
+          statusOrder: {
+            [Op.eq]: "order selesai", // Tidak mengambil data dengan status selesai
+          },
+        },
+        include: [
+          {
+            model: User,
+            attributes: ["name", "email"],
+          },
+          {
+            model: Logistik,
+            attributes: [
+              "orderPemanenUuid",
+              "tanggalPengiriman",
+              "waktuPengiriman",
+              "estimasiWaktuTiba",
+              "aktualWaktuTiba",
+              "catatanEfisiensiRute",
+              "biayaTransportasi",
+              "kondisiPengiriman",
+              "catatanDariPenerima",
+            ],
+            required: false,
+          },
+        ],
+      });
+    } else if (req.role === "perusahaan") {
+      response = await Product.findAll({
+        attributes: [
+          "uuid",
+          "tanggalPemanenan",
+          "statusOrder",
+          "varietasSingkong",
+          "estimasiBerat",
+          "estimasiHarga",
+          "namaPerusahaan",
+          "emailPerusahaan",
+          "namaLogistik",
+          "emailLogistik",
+          "namaPabrik",
+          "emailPabrik",
+        ],
+        where: {
+          namaPerusahaan: req.name,
+          emailPerusahaan: req.email,
+          statusOrder: {
+            [Op.eq]: "order selesai",
+          },
+        },
+        include: [
+          {
+            model: User,
+            attributes: ["name", "email"],
+          },
+          {
+            model: Logistik,
+            attributes: [
+              "orderPemanenUuid",
+              "tanggalPengiriman",
+              "waktuPengiriman",
+              "estimasiWaktuTiba",
+              "aktualWaktuTiba",
+              "catatanEfisiensiRute",
+              "biayaTransportasi",
+              "kondisiPengiriman",
+              "catatanDariPenerima",
+            ],
+            required: false,
+          },
+          {
+            model: TransaksiPR,
+            attributes: ["orderPemanenUuid", "hargaaktual", "catatanharga", "tanggalselesai"],
+            required: false,
+          },
+          {
+            model: TransaksiPBK,
+            attributes: ["orderPemanenUuid", "tanggalPenerimaan", "beratTotalDiterima", "catatanKualitas", "evaluasiKualitas"],
+            required: false,
+          },
+          {
+            model: limbahpetani,
+            attributes: [
+              "beratLimbahBatang",
+              "catatanLimbahBatang",
+              "beratLimbahDaun",
+              "catatanLimbahDaun",
+              "beratLimbahAkar",
+              "catatanLimbahAkar",
+            ],
+            required: false,
+          },
+        ],
+      });
+    } else if (req.role === "pabrik") {
+      response = await Product.findAll({
+        attributes: [
+          "uuid",
+          "tanggalPemanenan",
+          "statusOrder",
+          "varietasSingkong",
+          "estimasiBerat",
+          "estimasiHarga",
+          "namaPerusahaan",
+          "emailPerusahaan",
+          "namaLogistik",
+          "emailLogistik",
+          "namaPabrik",
+          "emailPabrik",
+        ],
+        where: {
+          namaPabrik: req.name,
+          emailPabrik: req.email,
+          statusOrder: {
+            [Op.eq]: "order selesai",
+          },
+        },
+        include: [
+          {
+            model: User,
+            attributes: ["name", "email"],
+          },
+          {
+            model: TransaksiPBK,
+            attributes: ["orderPemanenUuid", "tanggalPenerimaan", "beratTotalDiterima", "catatanKualitas", "evaluasiKualitas"],
+            required: false,
+          },
+        ],
+      });
+    } else if (req.role === "petani") {
+      response = await Product.findAll({
+        attributes: [
+          "uuid",
+          "idLahan",
+          "tanggalPemanenan",
+          "statusOrder",
+          "varietasSingkong",
+          "estimasiBerat",
+          "estimasiHarga",
+        ],
+        where: {
+          userId: req.userId,
+          statusOrder: {
+            [Op.eq]: "order selesai",
+          },
+        },
+        include: [
+          {
+            model: User,
+            attributes: ["name", "email"],
+          },
+          {
+            model: Logistik,
+            attributes: [
+              "orderPemanenUuid",
+              "tanggalPengiriman",
+              "waktuPengiriman",
+              "estimasiWaktuTiba",
+              "aktualWaktuTiba",
+              "catatanEfisiensiRute",
+              "biayaTransportasi",
+              "kondisiPengiriman",
+              "catatanDariPenerima",
+            ],
+            required: false,
+          },
+          {
+            model: TransaksiPR,
+            attributes: ["orderPemanenUuid", "hargaaktual", "catatanharga", "tanggalselesai"],
+            required: false,
+          },
+          {
+            model: TransaksiPBK,
+            attributes: ["orderPemanenUuid", "tanggalPenerimaan", "beratTotalDiterima", "catatanKualitas", "evaluasiKualitas"],
+            required: false,
+          },
+          {
+            model: limbahpetani,
+            attributes: [
+              "beratLimbahBatang",
+              "catatanLimbahBatang",
+              "beratLimbahDaun",
+              "catatanLimbahDaun",
+              "beratLimbahAkar",
+              "catatanLimbahAkar",
+            ],
+            required: false,
+          },
+        ],
+      });
+    } else if (req.role === "admin") {
+      response = await Product.findAll({
+        attributes: [
+          "uuid",
+          "tanggalPemanenan",
+          "statusOrder",
+          "varietasSingkong",
+          "estimasiBerat",
+          "estimasiHarga",
+          "namaLogistik",
+          "emailLogistik",
+          "namaPabrik",
+          "emailPabrik",
+          "namaPerusahaan",
+          "emailPerusahaan",
+        ],
+        where: {
+          statusOrder: {
+            [Op.eq]: "order selesai", // Semua data dengan status selain selesai
+          },
+        },
+        include: [
+          {
+            model: User,
+            attributes: ["name", "email"],
+          },
+          {
+            model: Logistik,
+            attributes: [
+              "orderPemanenUuid",
+              "tanggalPengiriman",
+              "waktuPengiriman",
+              "estimasiWaktuTiba",
+              "aktualWaktuTiba",
+              "catatanEfisiensiRute",
+              "biayaTransportasi",
+              "kondisiPengiriman",
+              "catatanDariPenerima",
+            ],
+            required: false,
+          },
+          {
+            model: TransaksiPR,
+            attributes: ["orderPemanenUuid", "hargaaktual", "catatanharga", "tanggalselesai"],
+            required: false,
+          },
+          {
+            model: TransaksiPBK,
+            attributes: ["orderPemanenUuid", "tanggalPenerimaan", "beratTotalDiterima", "catatanKualitas", "evaluasiKualitas"],
+            required: false,
+          },
+          {
+            model: limbahpetani,
+            attributes: [
+              "beratLimbahBatang",
+              "catatanLimbahBatang",
+              "beratLimbahDaun",
+              "catatanLimbahDaun",
+              "beratLimbahAkar",
+              "catatanLimbahAkar",
+            ],
+            required: false,
+          },
+        ],
+      });
+    } else {
+      // Role tidak valid
+      return res.status(403).json({ msg: "Role tidak valid atau tidak memiliki akses." });
+    }
+
+    // Kirimkan respons
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(500).json({ msg: error.message });
+  }
+};
+
+
+
 
 
 // Controller untuk mendapatkan produk berdasarkan ID
@@ -228,6 +778,23 @@ export const getProductById = async (req, res) => {
     // Jika produk tidak ditemukan
     if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" });
 
+     // Periksa role pengguna
+     if (req.role !== "admin") {
+      // Pastikan produk sesuai dengan name, email, atau userId pengguna
+      if (
+        product.userId !== req.userId &&
+        product.namaLogistik !== req.name &&
+        product.namaPerusahaan !== req.name &&
+        product.namaPabrik !== req.name &&
+        product.emailLogistik !== req.email &&
+        product.emailPerusahaan !== req.email &&
+        product.emailPabrik !== req.email
+      ) {
+      return res
+        .status(403)
+        .json({ msg: "Anda tidak memiliki akses ke data ini." });
+    }
+  }
     // Ambil data transaksi terkait berdasarkan UUID produk
     const response = await Product.findOne({
       attributes: [
@@ -300,7 +867,7 @@ export const getProductById = async (req, res) => {
           required: false,
         },
         {
-          model: limbahpetani,  // Menambahkan model limbahpetani
+          model: limbahpetani,
           attributes: [
             "beratLimbahBatang",
             "catatanLimbahBatang",
@@ -316,7 +883,6 @@ export const getProductById = async (req, res) => {
         },
       ],
     });
-     
 
     // Ambil informasi lahan berdasarkan idLahan
     const lahanInfo = await Petani.findOne({

@@ -6,6 +6,7 @@ const router = express.Router();
 
 // Route untuk mendapatkan semua petani
 router.get("/petanis", verifyToken, getPetanis);
+
 // Route untuk mendapatkan data spesifik petani
 router.get("/petani/:id", verifyToken, getPetaniById);
 
