@@ -1356,7 +1356,7 @@ if (req.role === "logistik") {
             catatanEfisiensiRute,
             biayaTransportasi,
             kondisiPengiriman,
-            catatanDariPenerima,
+         
           },
           { transaction: t }
         );
@@ -1368,7 +1368,7 @@ if (req.role === "logistik") {
             catatanEfisiensiRute,
             biayaTransportasi,
             kondisiPengiriman,
-            catatanDariPenerima,
+         
             userId: req.userId,
           },
           { transaction: t }
@@ -1397,35 +1397,60 @@ if (req.role === "logistik") {
 }
 
 
-    // Pabrik input data transaksi
-    if (req.role === "pabrik") {
-      if (product.statusOrder !== "selesai diantar logistik") {
+if (req.role === "pabrik") {
+  if (product.statusOrder !== "selesai diantar logistik") {
+    return res.status(400).json({
+      msg: "Status order harus 'selesai diantar logistik' untuk pabrik dapat mencatat transaksi.",
+    });
+  }
+
+  if (tanggalPenerimaan && beratTotalDiterima && catatanDariPenerima) {
+    if (product.namaPabrik !== req.name || product.emailPabrik !== req.email) {
+      return res.status(400).json({
+        msg: "Nama atau email pabrik tidak sesuai dengan data pada produk.",
+      });
+    }
+
+    const t = await Sequelize.transaction();
+
+    try {
+      // Cari transaksi logistik terkait
+      const transaksiLogistik = await TransaksiLogistik.findOne({
+        where: { orderPemanenUuid: req.params.id },
+        transaction: t,
+      });
+
+      if (!transaksiLogistik) {
+        await t.rollback();
         return res.status(400).json({
-          msg: "Status order harus 'selesai diantar logistik' untuk pabrik dapat mencatat transaksi.",
+          msg: "Data logistik terkait tidak ditemukan, tidak dapat menyimpan catatan dari penerima.",
         });
       }
 
-      if (tanggalPenerimaan && beratTotalDiterima) {
-        if (product.namaPabrik !== req.name || product.emailPabrik !== req.email) {
-          return res.status(400).json({
-            msg: "Nama atau email pabrik tidak sesuai dengan data pada produk.",
-          });
-        }
+      // Simpan hanya catatanDariPenerima ke TransaksiLogistik
+      await transaksiLogistik.update(
+        { catatanDariPenerima },
+        { transaction: t }
+      );
 
-        const existingTransaksiPBK = await TransaksiPBK.findOne({
-          where: {
-            orderPemanenUuid: req.params.id,
-            beratTotalDiterima: { [Op.ne]: null },
-          },
+      // Simpan data transaksi pabrik
+      const existingTransaksiPBK = await TransaksiPBK.findOne({
+        where: {
+          orderPemanenUuid: req.params.id,
+          beratTotalDiterima: { [Op.ne]: null },
+        },
+        transaction: t,
+      });
+
+      if (existingTransaksiPBK) {
+        await t.rollback();
+        return res.status(400).json({
+          msg: "Berat total telah diterima sebelumnya, tidak dapat membuat transaksi baru.",
         });
+      }
 
-        if (existingTransaksiPBK) {
-          return res.status(400).json({
-            msg: "Berat total telah diterima sebelumnya, tidak dapat membuat transaksi baru.",
-          });
-        }
-
-        const transaksiPBK = await TransaksiPBK.create({
+      const transaksiPBK = await TransaksiPBK.create(
+        {
           orderPemanenUuid: req.params.id,
           tanggalPenerimaan,
           beratTotalDiterima,
@@ -1434,20 +1459,33 @@ if (req.role === "logistik") {
           userId: req.userId,
           createdAt: new Date(),
           updatedAt: new Date(),
-        });
+        },
+        { transaction: t }
+      );
 
-        const updatedStatus = "diterima pabrik";
-        await product.update({ statusOrder: updatedStatus });
-        return res.status(200).json({
-          msg: `Status order berhasil diperbarui menjadi ${updatedStatus}`,
-          transaksiPBK: transaksiPBK.dataValues,
-        });
-      } else {
-        return res.status(400).json({
-          msg: "Data pabrik tidak lengkap. Semua field harus diisi.",
-        });
-      }
+      // Perbarui status order produk
+      const updatedStatus = "diterima pabrik";
+      await product.update({ statusOrder: updatedStatus }, { transaction: t });
+
+      await t.commit();
+      return res.status(200).json({
+        msg: `Status order berhasil diperbarui menjadi ${updatedStatus}`,
+        transaksiPBK: transaksiPBK.dataValues,
+      });
+    } catch (error) {
+      await t.rollback();
+      return res.status(500).json({
+        msg: "Terjadi kesalahan saat mencatat transaksi pabrik.",
+        error: error.message,
+      });
     }
+  } else {
+    return res.status(400).json({
+      msg: "Data pabrik tidak lengkap. Semua field harus diisi.",
+    });
+  }
+}
+
 
     // Perusahaan input data transaksi
     if (req.role === "perusahaan") {
