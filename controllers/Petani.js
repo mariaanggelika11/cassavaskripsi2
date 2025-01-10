@@ -9,8 +9,22 @@ const JWT_SECRET = process.env.JWT_SECRET || "bbyifdrdd6r09u8fdxesesedtghbjkjkn"
 export const getPetanis = async (req, res) => {
   try {
     let response;
+
+    // Cek jika role adalah admin atau perusahaan, ambil semua data petani
     if (req.role === "admin" || req.role === "perusahaan") {
       response = await Petani.findAll({
+        include: [
+          {
+            model: User,
+            attributes: ["name", "email"],
+          },
+        ],
+        order: [["updatedAt", "DESC"]],
+      });
+    } else if (req.role === "petani") {
+      // Jika role adalah petani, hanya ambil data petani yang userId-nya sama dengan req.userID
+      response = await Petani.findAll({
+        where: { userId: req.userId },
         include: [
           {
             model: User,
@@ -22,6 +36,7 @@ export const getPetanis = async (req, res) => {
     } else {
       return res.status(403).json({ msg: "Akses Ditolak" });
     }
+
     res.status(200).json(response);
   } catch (error) {
     console.error("Error saat mendapatkan data petani:", error.message);

@@ -22,61 +22,51 @@ const Logistik = db.define(
   {
     orderPemanenUuid: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true, // Mengizinkan nilai null
     },
-    // Data transaksional
     idPengiriman: {
       type: DataTypes.STRING,
-      defaultValue: () => `TRLGS-${generateRandomString(6)}`, // Menghasilkan ID pengiriman acak dengan prefix 'TRLGS-'
-      allowNull: false,
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
-      },
+      defaultValue: () => `TRLGS-${generateRandomString(6)}`,
+      allowNull: true, // Mengizinkan nilai null
+    },
+    idKendaraan: {
+      type: DataTypes.STRING,
+      allowNull: true, // Mengizinkan nilai null
     },
     tanggalPengiriman: {
-      type: DataTypes.DATEONLY, // Hanya tanggal
-      allowNull: false,
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
-      },
+      type: DataTypes.DATEONLY,
+      allowNull: true, // Mengizinkan nilai null
     },
     waktuPengiriman: {
-      type: DataTypes.TIME, // Hanya waktu
-      allowNull: false,
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
-      },
+      type: DataTypes.TIME,
+      allowNull: true, // Mengizinkan nilai null
     },
     estimasiWaktuTiba: {
-      type: DataTypes.TIME, // Hanya waktu
-      allowNull: false,
-      validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
-      },
+      type: DataTypes.TIME,
+      allowNull: true, // Mengizinkan nilai null
     },
     aktualWaktuTiba: {
-      type: DataTypes.TIME, // Hanya waktu
-      allowNull: true, // Boleh kosong, tidak wajib diisi
+      type: DataTypes.TIME,
+      allowNull: true, // Mengizinkan nilai null
     },
     catatanEfisiensiRute: {
       type: DataTypes.TEXT,
-      allowNull: true, // Boleh kosong, tidak wajib diisi
+      allowNull: true, // Mengizinkan nilai null
     },
     biayaTransportasi: {
       type: DataTypes.FLOAT,
-      allowNull: false,
+      allowNull: true, // Mengizinkan nilai null
       validate: {
-        notEmpty: true, // Validasi bahwa nilai tidak boleh kosong
         isFloat: true, // Memastikan input adalah angka desimal
       },
     },
     kondisiPengiriman: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: true, // Mengizinkan nilai null
     },
     catatanDariPenerima: {
       type: DataTypes.TEXT,
-      allowNull: true, // Boleh kosong, tidak wajib diisi
+      allowNull: true, // Mengizinkan nilai null
     },
   },
   {

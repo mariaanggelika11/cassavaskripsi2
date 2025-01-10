@@ -11,6 +11,7 @@ import limbahpetani from "../models/LimbahPetani.js";
 import Pabrik from "../models/DasarPabrik.js";
 import TransaksiLogistik from "../models/TransaksiLogistik.js"; // Model transaksi logistik
 import { Op } from "sequelize"; // Import operator Sequelize
+import Sequelize from "../config/Database.js";
 
 // Controller untuk mendapatkan semua produk
 // Controller untuk mendapatkan semua produk
@@ -184,23 +185,8 @@ export const getOrderBerlangsung = async (req, res) => {
   try {
     let response;
 
-    // Periksa role pengguna
     if (req.role === "logistik") {
       response = await Product.findAll({
-        attributes: [
-          "uuid",
-          "tanggalPemanenan",
-          "statusOrder",
-          "varietasSingkong",
-          "estimasiBerat",
-          "estimasiHarga",
-          "namaPerusahaan",
-          "emailPerusahaan",
-          "namaLogistik",
-          "emailLogistik",
-          "namaPabrik",
-          "emailPabrik",
-        ],
         where: {
           namaLogistik: req.name,
           emailLogistik: req.email,
@@ -217,20 +203,31 @@ export const getOrderBerlangsung = async (req, res) => {
             model: Logistik,
             attributes: [
               "orderPemanenUuid",
+              "idKendaraan",
               "tanggalPengiriman",
               "waktuPengiriman",
               "estimasiWaktuTiba",
+              // Kolom berikut akan muncul tetapi bernilai null jika belum diisi
               "aktualWaktuTiba",
               "catatanEfisiensiRute",
               "biayaTransportasi",
               "kondisiPengiriman",
               "catatanDariPenerima",
             ],
-            required: false,
+            required: false, // Tidak memaksa adanya relasi
+            where: {
+              [Op.or]: [
+                { orderPemanenUuid: { [Op.ne]: null } },
+                { idKendaraan: { [Op.ne]: null } },
+                { tanggalPengiriman: { [Op.ne]: null } },
+                { waktuPengiriman: { [Op.ne]: null } },
+                { estimasiWaktuTiba: { [Op.ne]: null } },
+              ],
+            },
           },
         ],
       });
-    } else if (req.role === "perusahaan") {
+    }  else if (req.role === "perusahaan") {
       response = await Product.findAll({
         attributes: [
           "uuid",
@@ -262,6 +259,7 @@ export const getOrderBerlangsung = async (req, res) => {
             model: Logistik,
             attributes: [
               "orderPemanenUuid",
+              "idKendaraan",
               "tanggalPengiriman",
               "waktuPengiriman",
               "estimasiWaktuTiba",
@@ -271,7 +269,20 @@ export const getOrderBerlangsung = async (req, res) => {
               "kondisiPengiriman",
               "catatanDariPenerima",
             ],
-            required: false,
+            required: false, // Tidak memaksa adanya relasi
+            where: {
+              [Op.or]: [
+                { orderPemanenUuid: { [Op.ne]: null } },
+                { idKendaraan: { [Op.ne]: null } },
+                { tanggalPengiriman: { [Op.ne]: null } },
+                { waktuPengiriman: { [Op.ne]: null } },
+                { estimasiWaktuTiba: { [Op.ne]: null } },
+              ],
+            },
+            order: [
+              ["orderPemanenUuid", "ASC"], // Urutkan berdasarkan orderPemanenUuid
+              ["idKendaraan", "ASC"], // Jika diperlukan, urutkan juga berdasarkan idKendaraan
+            ],
           },
           {
             model: TransaksiPR,
@@ -358,6 +369,7 @@ export const getOrderBerlangsung = async (req, res) => {
             model: Logistik,
             attributes: [
               "orderPemanenUuid",
+              "idKendaraan",
               "tanggalPengiriman",
               "waktuPengiriman",
               "estimasiWaktuTiba",
@@ -367,9 +379,22 @@ export const getOrderBerlangsung = async (req, res) => {
               "kondisiPengiriman",
               "catatanDariPenerima",
             ],
-            required: false,
-          },
-          {
+            required: false, // Tidak memaksa adanya relasi
+            where: {
+              [Op.or]: [
+                { orderPemanenUuid: { [Op.ne]: null } },
+                { idKendaraan: { [Op.ne]: null } },
+                { tanggalPengiriman: { [Op.ne]: null } },
+                { waktuPengiriman: { [Op.ne]: null } },
+                { estimasiWaktuTiba: { [Op.ne]: null } },
+              ],
+        },
+        order: [
+          ["orderPemanenUuid", "ASC"], // Urutkan berdasarkan orderPemanenUuid
+          ["idKendaraan", "ASC"], // Jika diperlukan, urutkan juga berdasarkan idKendaraan
+        ],
+      },
+      {
             model: TransaksiPR,
             attributes: ["orderPemanenUuid", "hargaaktual", "catatanharga", "tanggalselesai"],
             required: false,
@@ -423,6 +448,7 @@ export const getOrderBerlangsung = async (req, res) => {
             model: Logistik,
             attributes: [
               "orderPemanenUuid",
+              "idKendaraan",
               "tanggalPengiriman",
               "waktuPengiriman",
               "estimasiWaktuTiba",
@@ -432,7 +458,20 @@ export const getOrderBerlangsung = async (req, res) => {
               "kondisiPengiriman",
               "catatanDariPenerima",
             ],
-            required: false,
+            required: false, // Tidak memaksa adanya relasi
+            where: {
+              [Op.or]: [
+                { orderPemanenUuid: { [Op.ne]: null } },
+                { idKendaraan: { [Op.ne]: null } },
+                { tanggalPengiriman: { [Op.ne]: null } },
+                { waktuPengiriman: { [Op.ne]: null } },
+                { estimasiWaktuTiba: { [Op.ne]: null } },
+              ],
+            },
+            order: [
+              ["orderPemanenUuid", "ASC"], // Urutkan berdasarkan orderPemanenUuid
+              ["idKendaraan", "ASC"], // Jika diperlukan, urutkan juga berdasarkan idKendaraan
+            ],
           },
           {
             model: TransaksiPR,
@@ -506,22 +545,33 @@ export const getHistoryOrder = async (req, res) => {
           },
           {
             model: Logistik,
-            attributes: [
-              "orderPemanenUuid",
-              "tanggalPengiriman",
-              "waktuPengiriman",
-              "estimasiWaktuTiba",
-              "aktualWaktuTiba",
-              "catatanEfisiensiRute",
-              "biayaTransportasi",
-              "kondisiPengiriman",
-              "catatanDariPenerima",
-            ],
-            required: false,
-          },
+        attributes: [
+          "orderPemanenUuid",
+          "idKendaraan",
+          "tanggalPengiriman",
+          "waktuPengiriman",
+          "estimasiWaktuTiba",
+          // Kolom berikut akan muncul tetapi bernilai null jika belum diisi
+          "aktualWaktuTiba",
+          "catatanEfisiensiRute",
+          "biayaTransportasi",
+          "kondisiPengiriman",
+          "catatanDariPenerima",
         ],
-      });
-    } else if (req.role === "perusahaan") {
+        required: false, // Tidak memaksa adanya relasi
+        where: {
+          [Op.or]: [
+            { orderPemanenUuid: { [Op.ne]: null } },
+            { idKendaraan: { [Op.ne]: null } },
+            { tanggalPengiriman: { [Op.ne]: null } },
+            { waktuPengiriman: { [Op.ne]: null } },
+            { estimasiWaktuTiba: { [Op.ne]: null } },
+          ],
+        },
+      },
+    ],
+  });
+}  else if (req.role === "perusahaan") {
       response = await Product.findAll({
         attributes: [
           "uuid",
@@ -553,6 +603,7 @@ export const getHistoryOrder = async (req, res) => {
             model: Logistik,
             attributes: [
               "orderPemanenUuid",
+              "idKendaraan",
               "tanggalPengiriman",
               "waktuPengiriman",
               "estimasiWaktuTiba",
@@ -562,7 +613,20 @@ export const getHistoryOrder = async (req, res) => {
               "kondisiPengiriman",
               "catatanDariPenerima",
             ],
-            required: false,
+            required: false, // Tidak memaksa adanya relasi
+            where: {
+              [Op.or]: [
+                { orderPemanenUuid: { [Op.ne]: null } },
+                { idKendaraan: { [Op.ne]: null } },
+                { tanggalPengiriman: { [Op.ne]: null } },
+                { waktuPengiriman: { [Op.ne]: null } },
+                { estimasiWaktuTiba: { [Op.ne]: null } },
+              ],
+            },
+            order: [
+              ["orderPemanenUuid", "ASC"], // Urutkan berdasarkan orderPemanenUuid
+              ["idKendaraan", "ASC"], // Jika diperlukan, urutkan juga berdasarkan idKendaraan
+            ],
           },
           {
             model: TransaksiPR,
@@ -649,6 +713,7 @@ export const getHistoryOrder = async (req, res) => {
             model: Logistik,
             attributes: [
               "orderPemanenUuid",
+              "idKendaraan",
               "tanggalPengiriman",
               "waktuPengiriman",
               "estimasiWaktuTiba",
@@ -658,9 +723,22 @@ export const getHistoryOrder = async (req, res) => {
               "kondisiPengiriman",
               "catatanDariPenerima",
             ],
-            required: false,
-          },
-          {
+            required: false, // Tidak memaksa adanya relasi
+            where: {
+              [Op.or]: [
+                { orderPemanenUuid: { [Op.ne]: null } },
+                { idKendaraan: { [Op.ne]: null } },
+                { tanggalPengiriman: { [Op.ne]: null } },
+                { waktuPengiriman: { [Op.ne]: null } },
+                { estimasiWaktuTiba: { [Op.ne]: null } },
+              ],
+        },
+        order: [
+          ["orderPemanenUuid", "ASC"], // Urutkan berdasarkan orderPemanenUuid
+          ["idKendaraan", "ASC"], // Jika diperlukan, urutkan juga berdasarkan idKendaraan
+        ],
+      },
+      {
             model: TransaksiPR,
             attributes: ["orderPemanenUuid", "hargaaktual", "catatanharga", "tanggalselesai"],
             required: false,
@@ -714,6 +792,7 @@ export const getHistoryOrder = async (req, res) => {
             model: Logistik,
             attributes: [
               "orderPemanenUuid",
+              "idKendaraan",
               "tanggalPengiriman",
               "waktuPengiriman",
               "estimasiWaktuTiba",
@@ -723,9 +802,22 @@ export const getHistoryOrder = async (req, res) => {
               "kondisiPengiriman",
               "catatanDariPenerima",
             ],
-            required: false,
-          },
-          {
+            required: false, // Tidak memaksa adanya relasi
+            where: {
+              [Op.or]: [
+                { orderPemanenUuid: { [Op.ne]: null } },
+                { idKendaraan: { [Op.ne]: null } },
+                { tanggalPengiriman: { [Op.ne]: null } },
+                { waktuPengiriman: { [Op.ne]: null } },
+                { estimasiWaktuTiba: { [Op.ne]: null } },
+              ],
+        },
+        order: [
+          ["orderPemanenUuid", "ASC"], // Urutkan berdasarkan orderPemanenUuid
+          ["idKendaraan", "ASC"], // Jika diperlukan, urutkan juga berdasarkan idKendaraan
+        ],
+      },
+      {
             model: TransaksiPR,
             attributes: ["orderPemanenUuid", "hargaaktual", "catatanharga", "tanggalselesai"],
             required: false,
@@ -825,6 +917,7 @@ export const getProductById = async (req, res) => {
           model: Logistik,
           attributes: [
             "orderPemanenUuid",
+            "idKendaraan",
             "tanggalPengiriman",
             "waktuPengiriman",
             "estimasiWaktuTiba",
@@ -837,7 +930,20 @@ export const getProductById = async (req, res) => {
           where: {
             orderPemanenUuid: product.uuid,
           },
-          required: false,
+          required: false, // Tidak memaksa adanya relasi
+          where: {
+            [Op.or]: [
+              { orderPemanenUuid: { [Op.ne]: null } },
+              { idKendaraan: { [Op.ne]: null } },
+              { tanggalPengiriman: { [Op.ne]: null } },
+              { waktuPengiriman: { [Op.ne]: null } },
+              { estimasiWaktuTiba: { [Op.ne]: null } },
+            ],
+          },
+          order: [
+            ["orderPemanenUuid", "ASC"], // Urutkan berdasarkan orderPemanenUuid
+            ["idKendaraan", "ASC"], // Jika diperlukan, urutkan juga berdasarkan idKendaraan
+          ],
         },
         {
           model: TransaksiPBK,
@@ -1010,7 +1116,7 @@ export const approveOrder = async (req, res) => {
       return res.status(404).json({ msg: "Produk tidak ditemukan" });
     }
 
-    const { perusahaan, pabrik, logistik, idKendaraan } = req.body;
+    const { perusahaan, pabrik, logistik, idKendaraan, estimasiWaktuTiba, waktuPengiriman, tanggalPengiriman } = req.body;
 
     let updatedStatus = product.statusOrder;
     let updatedFields = {};
@@ -1096,32 +1202,58 @@ export const approveOrder = async (req, res) => {
       }
     }
 
-    // Logistik menyetujui atau menolak
-    if (req.role === "logistik" && logistik !== undefined) {
-      if (product.namaLogistik) {
-        return res.status(400).json({ msg: "Logistik sudah menyetujui atau menolak, perubahan tidak diizinkan." });
-      }
+// Logistik menyetujui atau menolak
+if (req.role === "logistik" && logistik !== undefined) {
+  if (product.namaLogistik) {
+    return res.status(400).json({ msg: "Logistik sudah menyetujui atau menolak, perubahan tidak diizinkan." });
+  }
 
-      if (product.statusOrder !== "Perusahaan dan Pabrik Menyetujui, menunggu logistik") {
-        return res.status(400).json({ msg: "Logistik harus menunggu persetujuan dari perusahaan dan pabrik terlebih dahulu." });
-      }
+  if (product.statusOrder !== "Perusahaan dan Pabrik Menyetujui, menunggu logistik") {
+    return res.status(400).json({ msg: "Logistik harus menunggu persetujuan dari perusahaan dan pabrik terlebih dahulu." });
+  }
 
-      const kendaraan = await Logistikdasar.findOne({
-        where: { idKendaraan, userId: req.userId },
-      });
+  const kendaraan = await Logistikdasar.findOne({
+    where: { idKendaraan, userId: req.userId },
+  });
 
-      if (!kendaraan) {
-        return res.status(400).json({ msg: "ID Kendaraan tidak valid atau tidak terdaftar pada pengguna ini." });
-      }
+  if (!kendaraan) {
+    return res.status(400).json({ msg: "ID Kendaraan tidak valid atau tidak terdaftar pada pengguna ini." });
+  }
 
-      if (logistik === true) {
-        updatedStatus = "Menunggu waktu panen";
-        updatedFields = { statusOrder: updatedStatus, namaLogistik: req.name, emailLogistik: req.email };
-      } else if (logistik === false) {
-        updatedStatus = "ditolak untuk panen";
-        updatedFields = { statusOrder: updatedStatus, namaLogistik: req.name, emailLogistik: req.email };
-      }
-    }
+  if (!estimasiWaktuTiba) {
+    return res.status(400).json({ msg: "Logistik harus memasukkan estimasi waktu tiba." });
+  }
+
+  if (!waktuPengiriman) {
+    return res.status(400).json({ msg: "Logistik harus memasukkan waktu kedatangan." });
+  }
+
+  
+  if (!tanggalPengiriman) {
+    return res.status(400).json({ msg: "Logistik harus memasukkan tanggal pengiriman." });
+  }
+
+
+
+  // Menambahkan data ke database TransaksiLogistik
+  await TransaksiLogistik.create({
+    idKendaraan,
+    estimasiWaktuTiba,
+    waktuPengiriman,
+    tanggalPengiriman,
+    userId: req.userId,
+    orderPemanenUuid: req.params.id, // Menggunakan data dari produk terkait
+  });
+
+  if (logistik === true) {
+    updatedStatus = "Menunggu waktu panen";
+    updatedFields = { statusOrder: updatedStatus, namaLogistik: req.name, emailLogistik: req.email };
+  } else if (logistik === false) {
+    updatedStatus = "ditolak untuk panen";
+    updatedFields = { statusOrder: updatedStatus, namaLogistik: req.name, emailLogistik: req.email };
+  }
+}
+
 
     // Update the product with the new status
     await product.update(updatedFields);
@@ -1175,9 +1307,6 @@ export const inputTransaksi = async (req, res) => {
       beratTotalDiterima,
       catatanKualitas,
       evaluasiKualitas,
-      tanggalPengiriman,
-      waktuPengiriman,
-      estimasiWaktuTiba,
       aktualWaktuTiba,
       catatanEfisiensiRute,
       biayaTransportasi,
@@ -1194,57 +1323,79 @@ export const inputTransaksi = async (req, res) => {
       catatanLimbahAkar,
     } = req.body;
 
-    // Logistik input data transaksi
-    if (req.role === "logistik") {
-      if (product.statusOrder !== "Menunggu waktu panen") {
-        return res.status(400).json({
-          msg: "Status order harus 'Menunggu waktu panen' untuk logistik dapat mencatat transaksi.",
-        });
-      }
+// Logistik input data transaksi
+if (req.role === "logistik") {
+  if (product.statusOrder !== "Menunggu waktu panen") {
+    return res.status(400).json({
+      msg: "Status order harus 'Menunggu waktu panen' untuk logistik dapat mencatat transaksi.",
+    });
+  }
 
-      if (tanggalPengiriman && waktuPengiriman && estimasiWaktuTiba && aktualWaktuTiba) {
-        if (product.namaLogistik !== req.name || product.emailLogistik !== req.email) {
-          return res.status(400).json({ msg: "Nama atau email logistik tidak sesuai dengan data pada produk." });
-        }
-
-        const existingTransaksiLogistik = await TransaksiLogistik.findOne({
-          where: {
-            orderPemanenUuid: req.params.id,
-            aktualWaktuTiba: { [Op.ne]: null },
-          },
-        });
-
-        if (existingTransaksiLogistik) {
-          return res.status(400).json({
-            msg: "Aktual waktu tiba telah dicatat sebelumnya, tidak dapat membuat transaksi baru.",
-          });
-        }
-
-        const transaksiLogistik = await TransaksiLogistik.create({
-          orderPemanenUuid: req.params.id,
-          tanggalPengiriman,
-          waktuPengiriman,
-          estimasiWaktuTiba,
-          aktualWaktuTiba,
-          catatanEfisiensiRute,
-          biayaTransportasi,
-          kondisiPengiriman,
-          catatanDariPenerima,
-          userId: req.userId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-
-        const updatedStatus = "selesai diantar logistik";
-        await product.update({ statusOrder: updatedStatus });
-        return res.status(200).json({
-          msg: `Status order berhasil diperbarui menjadi ${updatedStatus}`,
-          transaksiLogistik: transaksiLogistik.dataValues,
-        });
-      } else {
-        return res.status(400).json({ msg: "Data logistik tidak lengkap. Semua field harus diisi." });
-      }
+  if (aktualWaktuTiba) {
+    if (product.namaLogistik !== req.name || product.emailLogistik !== req.email) {
+      return res.status(400).json({ msg: "Nama atau email logistik tidak sesuai dengan data pada produk." });
     }
+
+    // Gunakan transaksi Sequelize untuk menjaga konsistensi data
+    const t = await Sequelize.transaction();
+
+    try {
+      // Cari apakah transaksi logistik dengan orderPemanenUuid yang sama sudah ada
+      const existingTransaksiLogistik = await TransaksiLogistik.findOne({
+        where: { orderPemanenUuid: req.params.id },
+        transaction: t,
+      });
+
+      let transaksiLogistik;
+
+      if (existingTransaksiLogistik) {
+        // Jika data sudah ada, perbarui data yang ada
+        transaksiLogistik = await existingTransaksiLogistik.update(
+          {
+            aktualWaktuTiba,
+            catatanEfisiensiRute,
+            biayaTransportasi,
+            kondisiPengiriman,
+            catatanDariPenerima,
+          },
+          { transaction: t }
+        );
+      } else {
+        // Jika data belum ada, buat data baru
+        transaksiLogistik = await TransaksiLogistik.create(
+          {
+            aktualWaktuTiba,
+            catatanEfisiensiRute,
+            biayaTransportasi,
+            kondisiPengiriman,
+            catatanDariPenerima,
+            userId: req.userId,
+          },
+          { transaction: t }
+        );
+      }
+
+      // Perbarui status order produk
+      const updatedStatus = "selesai diantar logistik";
+      await product.update({ statusOrder: updatedStatus }, { transaction: t });
+
+      // Commit transaksi
+      await t.commit();
+
+      return res.status(200).json({
+        msg: `Status order berhasil diperbarui menjadi ${updatedStatus}`,
+        transaksiLogistik: transaksiLogistik.dataValues,
+      });
+    } catch (error) {
+      // Rollback transaksi jika ada error
+      await t.rollback();
+      return res.status(500).json({ msg: "Terjadi kesalahan saat mencatat transaksi logistik.", error: error.message });
+    }
+  } else {
+    return res.status(400).json({ msg: "Data logistik tidak lengkap. Semua field harus diisi." });
+  }
+}
+
 
     // Pabrik input data transaksi
     if (req.role === "pabrik") {
