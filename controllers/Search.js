@@ -1,4 +1,3 @@
-
 import Product from "../models/OrderPanen.js";
 import User from "../models/UserModel.js"; // Import model User
 import Logistikdasar from "../models/DasarLogistik.js";
@@ -11,6 +10,10 @@ import limbahpetani from "../models/LimbahPetani.js";
 import Pabrik from "../models/DasarPabrik.js";
 import TransaksiLogistik from "../models/TransaksiLogistik.js"; // Model transaksi logistik
 import { Op } from "sequelize"; // Import operator Sequelize
+
+const formatCurrency = (value) => value ? `Rp ${parseInt(value).toLocaleString("id-ID")}` : "-";
+const formatWeight = (value) => value ? `${parseFloat(value).toLocaleString("id-ID")} kg` : "-";
+const formatNumber = (value) => value ? parseFloat(value).toLocaleString("id-ID") : "-"; // Format number with a dot separator
 
 export const searchById = async (req, res) => {
   try {
@@ -120,14 +123,49 @@ export const searchById = async (req, res) => {
       return res.status(404).json({ msg: "Land data not found." });
     }
 
-    // Final response object
-    const finalResponse = {
-      InformasiOrder: result,
-      LahanInfo: lahanInfo,
+    // Format data before returning the response
+    const formattedResponse = {
+      InformasiOrder: {
+        ...result.toJSON(),
+        estimasiHarga: formatCurrency(result.estimasiHarga),
+        estimasiBerat: formatWeight(result.estimasiBerat),
+      },
+      LahanInfo: {
+        ...lahanInfo.toJSON(),
+        luaslahan: `${formatNumber(lahanInfo.luaslahan)} meter²`, // Adding luaslahan with dot separator
+      },
     };
 
+    // Format Logistik data
+    if (formattedResponse.InformasiOrder.Logistik) {
+      formattedResponse.InformasiOrder.Logistik.biayaTransportasi = formatCurrency(
+        formattedResponse.InformasiOrder.Logistik.biayaTransportasi
+      );
+    }
+
+    // Format TransaksiPR data
+    if (formattedResponse.InformasiOrder.TransaksiPR) {
+      formattedResponse.InformasiOrder.TransaksiPR.hargaaktual = formatCurrency(
+        formattedResponse.InformasiOrder.TransaksiPR.hargaaktual
+      );
+    }
+
+    // Format limbahpetani data
+    if (formattedResponse.InformasiOrder.limbahpetani) {
+      formattedResponse.InformasiOrder.limbahpetani.beratLimbahBatang = formatWeight(
+        formattedResponse.InformasiOrder.limbahpetani.beratLimbahBatang
+      );
+      formattedResponse.InformasiOrder.limbahpetani.beratLimbahDaun = formatWeight(
+        formattedResponse.InformasiOrder.limbahpetani.beratLimbahDaun
+      );
+      formattedResponse.InformasiOrder.limbahpetani.beratLimbahAkar = formatWeight(
+        formattedResponse.InformasiOrder.limbahpetani.beratLimbahAkar
+      );
+    }
+
     // Send the final response
-    res.status(200).json(finalResponse);
+    res.status(200).json(formattedResponse);
+
   } catch (error) {
     // Server error handling
     res.status(500).json({ msg: "Server error: " + error.message });

@@ -16,6 +16,7 @@ import TransaksiPBK from "./routes/TransaksiPabrikR.js";
 import limbahpetaniR from "./routes/LimbahPetaniR.js";
 import TransaksiLogistikRoute from "./routes/TransaksiLogistikRoute.js";
 import TransaksiPerusahaanR from "./routes/TransaksiPerusahaanR.js";
+import DasarPetaniR from "./routes/DasarPetaniR.js";
 
 dotenv.config();
 const app = express();
@@ -111,10 +112,11 @@ app.use(PabrikRoute);
 app.use(ProduksiRoute);
 app.use(SearchRoute);
 app.use(PerusahaanRoute);
-app.use(TransaksiLogistikRoute)
-app.use(limbahpetaniR)
-app.use(TransaksiPBK)
-app.use(TransaksiPerusahaanR)
+app.use(TransaksiLogistikRoute);
+app.use(limbahpetaniR);
+app.use(TransaksiPBK);
+app.use(TransaksiPerusahaanR);
+app.use(DasarPetaniR);
 
 app.listen(process.env.APP_PORT, () => {
   console.log(

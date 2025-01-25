@@ -6,7 +6,6 @@ import PabrikUser from "../models/UserPabrik.js";
 import PerusahaanUser from "../models/UserPerusahaan.js";
 import fs from "fs/promises";
 import path from "path";
-import jwt from "jsonwebtoken";
 
 const uploadDir = path.join(process.cwd(), "uploads", "img", "profile");
 
@@ -28,23 +27,18 @@ export const createUser  = async (req, res) => {
   if (password !== confPassword) {
     return res.status(400).json({ msg: "Password dan Confirm Password tidak cocok" });
   }
-
-  try {
-    // Cek apakah sudah ada pengguna dengan email dan role yang sama
+  try {    // Cek apakah sudah ada pengguna dengan email dan role yang sama
     const existingUser  = await User.findOne({ where: { email, role } });
     if (existingUser ) {
       return res.status(400).json({ msg: "Email sudah terdaftar dengan role yang sama" });
     }
-
     const hashPassword = await bcrypt.hash(password, 10);
-
     const newUser  = await User.create({
       name,
       email,
       password: hashPassword,
       role,
     });
-
     const userDetails = {
       uuid: newUser .uuid,
       name,
@@ -52,10 +46,9 @@ export const createUser  = async (req, res) => {
       nohp: nohp || "",
       alamat: alamat || "",
       foto: foto,
-      url: `${req.protocol}://${req.get("host")}/profile/profile.png`,
+      url: `${req.protocol}s://${req.get("host").split(":")[0]}:8000/profile/${foto}`,
       password: hashPassword,
     };
-
     if (role.toLowerCase() === "petani") {
       await PetaniUsers.create(userDetails);
     } else if (role.toLowerCase() === "logistik") {
@@ -65,7 +58,6 @@ export const createUser  = async (req, res) => {
     } else if (role.toLowerCase() === "perusahaan") {
       await PerusahaanUser .create(userDetails);
     }
-
     res.status(201).json({ msg: "Register Berhasil" });
   } catch (error) {
     console.log(error);
@@ -105,7 +97,7 @@ export const updateUser = async (req, res) => {
 
     if (req.file) {
       updatedData.foto = req.file.filename;
-      updatedData.url = `${req.protocol}://${req.get("host")}/profile/${req.file.filename}`;
+      updatedData.url = `${req.protocol}s://${req.get("host").split(":")[0]}:8000/profile/${req.file.filename}`;
 
       if (userToUpdate.foto && !userToUpdate.foto.startsWith("defaultProfile.png")) {
         await deleteFile(userToUpdate.foto);
@@ -235,6 +227,23 @@ export const getUserById = async (req, res) => {
     res.status(200).json(userDetails);
   } catch (error) {
     console.error("Error saat mendapatkan detail pengguna:", error.message);
+    res.status(500).json({ msg: error.message });
+  }
+};
+
+export const getAllPerusahaanNames = async (req, res) => {
+  try {
+    // Mendapatkan semua nama perusahaan
+    const perusahaanNames = await PerusahaanUser.findAll({
+      attributes: ["name"],
+    });
+
+    // Menyusun hasil sebagai array langsung
+    const result = perusahaanNames.map((user) => user.name);
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error saat mendapatkan nama perusahaan:", error.message);
     res.status(500).json({ msg: error.message });
   }
 };

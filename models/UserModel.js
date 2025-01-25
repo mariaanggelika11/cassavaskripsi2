@@ -52,8 +52,7 @@ const Users = db.define(
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        notEmpty: true,
-      // immutable: true, //role tidak dapat diubah setelah dibuat
+        notEmpty: true, //role tidak dapat diubah setelah dibuat
       },
     },
   },

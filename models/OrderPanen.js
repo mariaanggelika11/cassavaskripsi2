@@ -41,6 +41,13 @@ const OrderPemanen = db.define(
         notEmpty: true, // Validasi bahwa kolom ini tidak boleh kosong
       },
     },
+    idTanam: {
+      type: DataTypes.STRING, // Tipe data string
+      allowNull: false, // Tidak boleh null
+      validate: {
+        notEmpty: true, // Validasi bahwa kolom ini tidak boleh kosong
+      },
+    },
     tanggalPemanenan: {
       type: DataTypes.STRING, // Tipe data string
       allowNull: false, // Tidak boleh null
@@ -55,7 +62,7 @@ const OrderPemanen = db.define(
       field: 'statusorder'  // Menyesuaikan nama kolom di database jika menggunakan huruf kecil
     },
     
-    varietasSingkong: {
+    varietasSingkong: { //
       type: DataTypes.STRING, // Tipe data string
     },
     estimasiBerat: {

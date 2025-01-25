@@ -1,5 +1,5 @@
 import express from "express";
-import { getProducts, getProductById, createProduct,  deleteProduct, inputTransaksi, approveOrder, getOrderMasuk, getOrderBerlangsung, getHistoryOrder} from "../controllers/Order.js";
+import { getProducts, getProductById, createProduct,  deleteProduct, inputTransaksi, approveOrder, getOrderMasuk, getOrderBerlangsung, getHistoryOrder, getHistoryOrderPdf} from "../controllers/Order.js";
 import { verifyToken } from "../middleware/AuthUser.js"; // Menggunakan verifyToken dari AuthUser.js
 
 const router = express.Router();
@@ -15,6 +15,9 @@ router.get("/orderberlangsung", verifyToken, getOrderBerlangsung);
 
 // Rute untuk mendapatkan produk yang sudah "order selesai" berdasarkan yg dia acc
 router.get("/historyorder", verifyToken, getHistoryOrder);
+
+//Download pdf
+router.get("/download/:id", verifyToken, getHistoryOrderPdf );
 
 // Rute untuk mendapatkan produk berdasarkan ID
 router.get("/products/:id", verifyToken, getProductById);

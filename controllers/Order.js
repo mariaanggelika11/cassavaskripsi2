@@ -6,12 +6,17 @@ import TransaksiPR from "../models/TransaksiPerusahaan.js";
 import Logistik from "../models/TransaksiLogistik.js";
 import Perusahaan from "../models/DasarPerusahaan.js";
 import Petani from "../models/RencanaTanam.js";
+import Dasarpetani from "../models/DasarPetani.js";
 import TransaksiPBK from "../models/TransaksiPabrik.js";
 import limbahpetani from "../models/LimbahPetani.js";
 import Pabrik from "../models/DasarPabrik.js";
 import TransaksiLogistik from "../models/TransaksiLogistik.js"; // Model transaksi logistik
 import { Op } from "sequelize"; // Import operator Sequelize
 import Sequelize from "../config/Database.js";
+import fs from 'fs';
+import path from 'path';
+import PDFDocument from 'pdfkit';
+import Petanidasar from "../models/DasarPetani.js";
 
 // Controller untuk mendapatkan semua produk
 // Controller untuk mendapatkan semua produk
@@ -174,12 +179,41 @@ export const getOrderMasuk = async (req, res) => {
       return res.status(403).json({ msg: "Role tidak valid atau tidak memiliki akses." });
     }
 
-    res.status(200).json(response);
+    // Format data untuk biaya transportasi, estimasi harga, berat, dan limbah
+const formatNumber = (value) => value ? parseInt(value).toLocaleString("id-ID") : "-";
+const formatFloat = (value) => value ? parseFloat(value).toLocaleString("id-ID") : "-";
+
+const formattedResponse = response.map((item) => {
+  // Format biaya transportasi, estimasi harga, estimasi berat
+  if (item.Logistik) {
+    item.Logistik.biayaTransportasi = formatNumber(item.Logistik.biayaTransportasi);
+  }
+  item.estimasiHarga = formatNumber(item.estimasiHarga);
+  item.estimasiBerat = formatFloat(item.estimasiBerat);
+
+  if (item.TransaksiPR) {
+    item.TransaksiPR.hargaaktual = formatNumber(item.TransaksiPR.hargaaktual);
+  }
+
+  // Format berat limbah (jika ada limbah petani)
+  if (item.limbahpetani) {
+    item.limbahpetani.beratLimbahBatang = formatFloat(item.limbahpetani.beratLimbahBatang);
+    item.limbahpetani.beratLimbahDaun = formatFloat(item.limbahpetani.beratLimbahDaun);
+    item.limbahpetani.beratLimbahAkar = formatFloat(item.limbahpetani.beratLimbahAkar);
+  }
+
+  return item;
+});
+
+
+    // Kirimkan respons dengan data yang diformat
+    res.status(200).json(formattedResponse);
   } catch (error) {
-    res.status(500).json({ msg: error.message }); // Tangani kesalahan server
+    res.status(500).json({ msg: error.message });
   }
 };
 
+  
 // Controller untuk mendapatkan produk berdasarkan kondisi role(HISTORY PANEN SETIAP ROLE hanya milik dia sendiri yg dia acc)
 export const getOrderBerlangsung = async (req, res) => {
   try {
@@ -502,13 +536,38 @@ export const getOrderBerlangsung = async (req, res) => {
       return res.status(403).json({ msg: "Role tidak valid atau tidak memiliki akses." });
     }
 
-    // Kirimkan respons
-    res.status(200).json(response);
-  } catch (error) {
-    res.status(500).json({ msg: error.message });
-  }
-};
+   /// Format data untuk biaya transportasi, estimasi harga, berat, dan limbah
+const formatNumber = (value) => value ? parseInt(value).toLocaleString("id-ID") : "-";
+const formatFloat = (value) => value ? parseFloat(value).toLocaleString("id-ID") : "-";
 
+const formattedResponse = response.map((item) => {
+  // Format biaya transportasi, estimasi harga, estimasi berat
+  if (item.Logistik) {
+    item.Logistik.biayaTransportasi = formatNumber(item.Logistik.biayaTransportasi);
+  }
+  item.estimasiHarga = formatNumber(item.estimasiHarga);
+  item.estimasiBerat = formatFloat(item.estimasiBerat);
+
+  if (item.TransaksiPR) {
+    item.TransaksiPR.hargaaktual = formatNumber(item.TransaksiPR.hargaaktual);
+  }
+
+  // Format berat limbah (jika ada limbah petani)
+  if (item.limbahpetani) {
+    item.limbahpetani.beratLimbahBatang = formatFloat(item.limbahpetani.beratLimbahBatang);
+    item.limbahpetani.beratLimbahDaun = formatFloat(item.limbahpetani.beratLimbahDaun);
+    item.limbahpetani.beratLimbahAkar = formatFloat(item.limbahpetani.beratLimbahAkar);
+  }
+
+  return item;
+});
+
+       // Kirimkan respons dengan data yang diformat
+       res.status(200).json(formattedResponse);
+     } catch (error) {
+       res.status(500).json({ msg: error.message });
+     }
+   };
 
 export const getHistoryOrder = async (req, res) => {
   try {
@@ -846,13 +905,258 @@ export const getHistoryOrder = async (req, res) => {
       return res.status(403).json({ msg: "Role tidak valid atau tidak memiliki akses." });
     }
 
-    // Kirimkan respons
-    res.status(200).json(response);
+    // Format data untuk biaya transportasi, estimasi harga, berat, dan limbah
+const formatNumber = (value) => value ? parseInt(value).toLocaleString("id-ID") : "-";
+const formatFloat = (value) => value ? parseFloat(value).toLocaleString("id-ID") : "-";
+
+const formattedResponse = response.map((item) => {
+  // Format biaya transportasi, estimasi harga, estimasi berat
+  if (item.Logistik) {
+    item.Logistik.biayaTransportasi = formatNumber(item.Logistik.biayaTransportasi);
+  }
+  item.estimasiHarga = formatNumber(item.estimasiHarga);
+  item.estimasiBerat = formatFloat(item.estimasiBerat);
+
+  if (item.TransaksiPR) {
+    item.TransaksiPR.hargaaktual = formatNumber(item.TransaksiPR.hargaaktual);
+  }
+
+  // Format berat limbah (jika ada limbah petani)
+  if (item.limbahpetani) {
+    item.limbahpetani.beratLimbahBatang = formatFloat(item.limbahpetani.beratLimbahBatang);
+    item.limbahpetani.beratLimbahDaun = formatFloat(item.limbahpetani.beratLimbahDaun);
+    item.limbahpetani.beratLimbahAkar = formatFloat(item.limbahpetani.beratLimbahAkar);
+  }
+
+  return item;
+});
+
+
+    // Kirimkan respons dengan data yang diformat
+    res.status(200).json(formattedResponse);
   } catch (error) {
     res.status(500).json({ msg: error.message });
   }
 };
 
+
+export const getHistoryOrderPdf = async (req, res) => {
+  try {
+    // Cari produk berdasarkan UUID
+    const product = await Product.findOne({
+      where: {
+        uuid: req.params.id, // Menggunakan UUID dari parameter URL
+      }
+    });
+
+    // Jika produk tidak ditemukan
+    if (!product) return res.status(404).json({ msg: "Data tidak ditemukan" });
+
+    // Periksa role pengguna
+    if (req.role !== "admin") {
+      // Pastikan produk sesuai dengan name, email, atau userId pengguna
+      if (
+        product.userId !== req.userId &&
+        product.namaLogistik !== req.name &&
+        product.namaPerusahaan !== req.name &&
+        product.namaPabrik !== req.name &&
+        product.emailLogistik !== req.email &&
+        product.emailPerusahaan !== req.email &&
+        product.emailPabrik !== req.email
+      ) {
+        return res
+          .status(403)
+          .json({ msg: "Anda tidak memiliki akses ke data ini." });
+      }
+    }
+
+    // Ambil data transaksi terkait berdasarkan UUID produk
+    const response = await Product.findOne({
+      attributes: [
+        "uuid",
+        "idLahan",
+        "tanggalPemanenan",
+        "statusOrder",
+        "varietasSingkong",
+        "estimasiBerat",
+        "estimasiHarga",
+        "userId",
+        "namaLogistik",
+        "namaPerusahaan",
+        "namaPabrik",
+        "emailPerusahaan",
+        "emailLogistik",
+        "emailPabrik",
+      ],
+      where: {
+        id: product.id,
+      },
+      include: [
+        {
+          model: User,
+          attributes: ["name", "email"],
+        },
+        {
+          model: Logistik,
+          attributes: [
+            "orderPemanenUuid",
+            "idKendaraan",
+            "tanggalPengiriman",
+            "waktuPengiriman",
+            "estimasiWaktuTiba",
+            "aktualWaktuTiba",
+            "catatanEfisiensiRute",
+            "biayaTransportasi",
+            "kondisiPengiriman",
+            "catatanDariPenerima",
+          ],
+          where: {
+            orderPemanenUuid: product.uuid,
+          },
+          required: false, // Tidak memaksa adanya relasi
+        },
+        {
+          model: TransaksiPBK,
+          attributes: [
+            "orderPemanenUuid",
+            "tanggalPenerimaan",
+            "beratTotalDiterima",
+            "catatanKualitas",
+            "evaluasiKualitas",
+          ],
+          where: {
+            orderPemanenUuid: product.uuid,
+          },
+          required: false,
+        },
+        {
+          model: TransaksiPR,
+          attributes: [
+            "orderPemanenUuid",
+            "hargaaktual",
+            "catatanharga",
+            "tanggalselesai",
+          ],
+          where: {
+            orderPemanenUuid: product.uuid,
+          },
+          required: false,
+        },
+        {
+          model: limbahpetani,
+          attributes: [
+            "beratLimbahBatang",
+            "catatanLimbahBatang",
+            "beratLimbahDaun",
+            "catatanLimbahDaun",
+            "beratLimbahAkar",
+            "catatanLimbahAkar",
+          ],
+          where: {
+            orderPemanenUuid: product.uuid,
+          },
+          required: false,
+        },
+      ],
+      raw: true, // Clean up the response by excluding metadata
+    });
+
+    // Ambil informasi lahan berdasarkan idLahan
+    const lahanInfo = await Petani.findOne({
+      where: { idlahan: product.idLahan },
+      raw: true, // Clean up the response by excluding metadata
+    });
+
+    // Jika informasi lahan tidak ditemukan
+    if (!lahanInfo) {
+      return res.status(404).json({ msg: "Data lahan tidak ditemukan." });
+    }
+
+    // Sertakan informasi lahan dalam respons
+    const finalResponse = {
+      InformasiOrder: response,
+      LahanInfo: lahanInfo,
+    };
+
+    // Membuat PDF
+    const doc = new PDFDocument();
+    doc.fontSize(16).text("History Order", { align: "center" });
+    doc.moveDown();
+    doc.fontSize(12);
+
+    // Menulis data ke dalam PDF
+    // Loop melalui semua atribut untuk mencetaknya
+    const printData = (data, indent = "") => {
+      for (const key in data) {
+        if (data.hasOwnProperty(key)) {
+          // Cetak hanya jika data bukan metadata atau atribut Sequelize
+          if (key !== "includeValidated" && key !== "raw" && key !== "isNewRecord") {
+            if (typeof data[key] === "object" && data[key] !== null) {
+              // Jika data adalah objek atau array, rekursif
+              doc.text(`${indent}${key}:`);
+              printData(data[key], indent + "  ");
+            } else {
+              // Jika data bukan objek, cetak data
+              doc.text(`${indent}${key}: ${data[key]}`);
+            }
+          }
+        }
+      }
+    };
+
+    // Cetak data dari InformasiOrder
+    printData(finalResponse.InformasiOrder);
+
+    // Cetak data dari LahanInfo
+    doc.text("--------------------------------------");
+    doc.text("Informasi Lahan:");
+    printData(finalResponse.LahanInfo);
+
+    // Jika ada transaksi atau limbah, tambahkan ke PDF
+    if (finalResponse.InformasiOrder.Logistik) {
+      doc.text("--------------------------------------");
+      doc.text("Logistik:");
+      finalResponse.InformasiOrder.Logistik.forEach(log => {
+        printData(log, "  ");
+      });
+    }
+
+    if (finalResponse.InformasiOrder.TransaksiPBK) {
+      doc.text("--------------------------------------");
+      doc.text("TransaksiPBK:");
+      finalResponse.InformasiOrder.TransaksiPBK.forEach(tx => {
+        printData(tx, "  ");
+      });
+    }
+
+    if (finalResponse.InformasiOrder.TransaksiPR) {
+      doc.text("--------------------------------------");
+      doc.text("TransaksiPR:");
+      finalResponse.InformasiOrder.TransaksiPR.forEach(tx => {
+        printData(tx, "  ");
+      });
+    }
+
+    if (finalResponse.InformasiOrder.limbahpetani) {
+      doc.text("--------------------------------------");
+      doc.text("Limbah Petani:");
+      finalResponse.InformasiOrder.limbahpetani.forEach(limbah => {
+        printData(limbah, "  ");
+      });
+    }
+
+    // Mengirim PDF langsung ke pengguna
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="historyOrder.pdf"');
+
+    doc.pipe(res); // Stream langsung ke respons HTTP
+    doc.end();
+
+  } catch (error) {
+    // Tangani kesalahan server
+    res.status(500).json({ msg: error.message });
+  }
+};
 
 
 
@@ -1006,103 +1310,139 @@ export const getProductById = async (req, res) => {
       LahanInfo: lahanInfo,
     };
 
-    // Kirim respons akhir
-    res.status(200).json(finalResponse);
+    // Format data untuk biaya transportasi, estimasi harga, berat, dan limbah
+    const formatCurrency = (value) => value ? `Rp ${parseInt(value).toLocaleString("id-ID")}` : "-";
+const formatWeight = (value) => value ? `${parseFloat(value).toLocaleString("id-ID")} kg` : "-";
+
+    const formattedResponse = response.map((item) => {
+      
+      // Format biaya transportasi, estimasi harga, estimasi berat
+      if (item.Logistik) {
+        item.Logistik.biayaTransportasi = formatCurrency(item.Logistik.biayaTransportasi);
+      }
+      item.estimasiHarga = formatCurrency(item.estimasiHarga);
+      item.estimasiBerat = formatWeight(item.estimasiBerat);
+
+      if (item.TransaksiPR) {
+        item.TransaksiPR.hargaaktual = formatCurrency(item.TransaksiPR.hargaaktual);
+      }
+
+      // Format berat limbah (jika ada limbah petani)
+      if (item.limbahpetani) {
+        item.limbahpetani.beratLimbahBatang = formatWeight(item.limbahpetani.beratLimbahBatang);
+        item.limbahpetani.beratLimbahDaun = formatWeight(item.limbahpetani.beratLimbahDaun);
+        item.limbahpetani.beratLimbahAkar = formatWeight(item.limbahpetani.beratLimbahAkar);
+      }
+
+      return item;
+    });
+
+    // Kirimkan respons dengan data yang diformat
+    res.status(200).json(formattedResponse);
   } catch (error) {
-    // Tangani kesalahan server
     res.status(500).json({ msg: error.message });
   }
 };
 
 
 export const createProduct = async (req, res) => {
-  const { idLahan, tanggalPemanenan, statusOrder, varietasSingkong, estimasiBerat } = req.body;
+  const { idTanam, tanggalPemanenan, statusOrder, varietasSingkong, estimasiBerat } = req.body;
 
-  // Validasi bahwa idLahan harus diisi
-  if (!idLahan) {
-    return res.status(400).json({ msg: "ID lahan harus diisi." });
+  // Validasi input idTanam
+  if (!idTanam) {
+    return res.status(400).json({ msg: "ID Rencana Tanam harus diisi." });
   }
 
   try {
-    // Ambil informasi lahan berdasarkan idLahan
-    const lahan = await Petani.findOne({
-      where: { idlahan: idLahan } // Ganti dengan model yang sesuai jika perlu
-    });
-
-    if (!lahan) {
-      return res.status(404).json({ msg: "Data lahan tidak ditemukan." });
+    // Cek apakah idTanam valid pada database Petani
+    const tanam = await Petani.findOne({ where: { idtanam: idTanam } });
+    if (!tanam) {
+      return res.status(404).json({ msg: "ID Tanam tidak ditemukan di database Petani." });
     }
 
-    // Ambil harga terakhir yang diperbarui dari perusahaan
+    // Cek apakah userId pada idTanam cocok dengan req.userId
+    if (tanam.userId !== req.userId) {
+      return res.status(403).json({ msg: "Anda tidak memiliki akses untuk menggunakan ID Tanam ini." });
+    }
+
+    // Ambil data harga terbaru dari database Perusahaan
     const perusahaanData = await Perusahaan.findOne({
       order: [['tanggalupdateharga', 'DESC']],
       limit: 1,
-      attributes: ['hargaGradeA', 'hargaGradeB', 'hargaGradeC'] // Ambil semua harga
+      attributes: ['hargaGradeA', 'hargaGradeB', 'hargaGradeC']
     });
 
     if (!perusahaanData) {
-      return res.status(400).json({ msg: "Data harga tidak ditemukan" });
+      return res.status(400).json({ msg: "Data harga tidak ditemukan." });
     }
 
-    // Ambil harga berdasarkan varietas singkong
+    // Validasi varietas singkong dan hitung harga
     let hargaGrade;
     if (varietasSingkong === "Grade A") {
-      hargaGrade = perusahaanData.hargaGradeA || 0; // Ambil harga grade A
+      hargaGrade = perusahaanData.hargaGradeA || 0;
     } else if (varietasSingkong === "Grade B") {
-      hargaGrade = perusahaanData.hargaGradeB || 0; // Ambil harga grade B
+      hargaGrade = perusahaanData.hargaGradeB || 0;
     } else if (varietasSingkong === "Grade C") {
-      hargaGrade = perusahaanData.hargaGradeC || 0; // Ambil harga grade C
+      hargaGrade = perusahaanData.hargaGradeC || 0;
     } else {
-      return res.status(400).json({ msg: "Varietas singkong tidak valid" });
+      return res.status(400).json({ msg: "Varietas singkong tidak valid." });
     }
 
-    // Hitung estimasi harga
     const estimasiHarga = estimasiBerat * hargaGrade;
 
-    // Ambil data petani berdasarkan userId
-    const petani = await Petani.findOne({
-      where: { userId: req.userId }, // Ambil data petani berdasarkan userId
-    });
+    // Ambil idLahan dari data Petani berdasarkan idTanam
+    const idLahan = tanam.idlahan;
 
-    if (!petani) {
-      return res.status(400).json({ msg: "Data petani tidak ditemukan" });
-    }
-
-    // Verifikasi bahwa idLahan yang diberikan adalah milik petani
-    if (petani.idlahan !== idLahan) {
-      return res.status(403).json({ msg: "Anda tidak memiliki akses ke ID lahan ini." });
-    }
-
-    // Buat produk baru
+    // Buat produk baru pada database Product
     const newProduct = await Product.create({
-      idLahan: petani.idlahan, // Ambil ID lahan dari data petani
+      idTanam: tanam.idtanam,
+      idLahan, // Menyimpan idLahan yang terkait
       tanggalPemanenan,
-      statusOrder: statusOrder || "pending", // Set status default ke 'pending' jika tidak ada status yang disediakan
+      statusOrder: statusOrder || "pending",
       varietasSingkong,
       estimasiBerat,
-      estimasiHarga, // Simpan estimasi harga yang telah dihitung
-      userId: req.userId, // Asumsikan req.userId sudah diisi melalui middleware autentikasi
+      estimasiHarga,
+      userId: req.userId,
     });
 
-    // Kirim respons berhasil dengan informasi produk yang telah dibuat
+    // Format estimasi harga ke format Rp
+    const formattedEstimasiHarga = new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0 // Tanpa desimal
+    }).format(newProduct.estimasiHarga);
+
+    // Kirim respon
     res.status(201).json({
       msg: "Order Pemanenan Created Successfully",
       orderPemanenan: {
         uuid: newProduct.uuid,
-        idLahan: newProduct.idLahan,
+        idTanam: newProduct.idTanam,
+        idLahan: newProduct.idLahan, // Sertakan idLahan dalam respon
         tanggalPemanenan: newProduct.tanggalPemanenan,
         statusOrder: newProduct.statusOrder,
         varietasSingkong: newProduct.varietasSingkong,
         estimasiBerat: newProduct.estimasiBerat,
-        estimasiHarga: newProduct.estimasiHarga,
-        userId: newProduct.userId
+        estimasiHarga: formattedEstimasiHarga,
+        userId: newProduct.userId,
       },
-      lahanInfo: lahan // Sertakan informasi lahan dalam respons
+      tanamInfo: {
+        idTanam: tanam.idtanam,
+        idLahan: tanam.idlahan, // Sertakan idLahan dalam informasi tanam
+        userId: tanam.userId,
+        kategoriLahan: tanam.kategoriLahan,
+        lokasiLahan: tanam.lokasiLahan,
+        luasLahan: tanam.luasLahan,
+        periodeTanamMulai: tanam.periodeTanamMulai,
+        periodeTanamSelesai: tanam.periodeTanamSelesai,
+      }
     });
-  } catch (error) { 
-    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
+  } catch (error) {
+    res.status(500).json({ msg: error.message });
   }
 };
+
+
 
 
 export const approveOrder = async (req, res) => {

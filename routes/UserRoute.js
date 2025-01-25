@@ -1,5 +1,5 @@
 import express from "express";
-import { getUsers, getUserById, createUser, updateUser, deleteUser } from "../controllers/Users.js";
+import { getAllPerusahaanNames, getUsers, getUserById, createUser, updateUser, deleteUser } from "../controllers/Users.js";
 import { verifyToken, adminOnly } from "../middleware/AuthUser.js";
 import multer from "multer";
 
@@ -30,5 +30,5 @@ router.get("/users/:uuid", verifyToken, getUserById);
 router.post("/users", verifyToken, adminOnly, createUser);
 router.patch("/users/:uuid", verifyToken, upload.single("foto"), updateUser );
 router.delete("/users/:uuid", verifyToken, adminOnly, deleteUser);
-
+router.get("/perusahaanterdaftar",verifyToken,getAllPerusahaanNames);
 export default router;

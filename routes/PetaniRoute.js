@@ -1,11 +1,15 @@
 import express, { Router } from "express";
-import { getPetanis, createPetani, updatePetani, getPetaniById, deletePetani, getAllLahanOptions, getLahanById } from "../controllers/Petani.js";
+import { getAllrencanatanam, getRencanaTanamById, getPetanis, createPetani, updatePetani, getPetaniById, deletePetani, updateStatusRencanaTanam, getPetanisApproved } from "../controllers/Petani.js";
 import { verifyToken } from "../middleware/AuthUser.js"; // Menggunakan verifyToken dari AuthUser.js
+
 
 const router = express.Router();
 
-// Route untuk mendapatkan semua petani
+// Route untuk mendapatkan semua petani jika admin mendapatkan semua, jika lahannya plasma hanya muncul di perusahaan terkait, jika inti, muncul di semua perusahaan
 router.get("/petanis", verifyToken, getPetanis);
+
+// Route untuk mendapatkan petani yg sudah disetujui rencana tanam
+router.get("/petanisapproved", verifyToken, getPetanisApproved);
 
 // Route untuk mendapatkan data spesifik petani
 router.get("/petani/:id", verifyToken, getPetaniById);
@@ -19,10 +23,9 @@ router.put("/petani/:id", verifyToken, updatePetani);
 // Route untuk menghapus data petani
 router.delete("/petani/:id", verifyToken, deletePetani);
 
-// Route untuk mendapatkan semua ID lahan dari semua petani
-router.get('/lahan',verifyToken, getAllLahanOptions);
+// Route menyetujui rencana tanam
+router.patch("/rencanatanam/:id", verifyToken, updateStatusRencanaTanam);
 
-// Route untuk mendapatkan data dari ID lahan yang spesifik
-router.get('/lahan/:idLahan',verifyToken, getLahanById);
-
+router.get("/rencanatanam", verifyToken, getAllrencanatanam);
+router.get("/rencanatanam/:id",verifyToken, getRencanaTanamById);
 export default router;
