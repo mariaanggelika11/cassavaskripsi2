@@ -471,15 +471,19 @@ export const deletePetani = async (req, res) => {
   }
 };
 
-/// Fungsi untuk mendapatkan semua ID lahan dari semua petani
+
+// Fungsi untuk mendapatkan semua ID rencana tanam berdasarkan userId
 export const getAllrencanatanam = async (req, res) => {
   try {
     const petani = await Petani.findAll({
       attributes: ['idtanam'], // Ambil hanya ID rencana tanam 
+      where: {
+        userId: req.userId // Filter berdasarkan userId yang diterima dari request
+      }
     });
 
     if (!petani.length) {
-      return res.status(404).json({ msg: "Tidak ada rencana tanam yang ditemukan." });
+      return res.status(404).json({ msg: "Tidak ada rencana tanam yang ditemukan untuk pengguna ini." });
     }
 
     // Mengambil hanya ID rencana tanam 
@@ -490,13 +494,14 @@ export const getAllrencanatanam = async (req, res) => {
   }
 };
 
+
 // Fungsi untuk mendapatkan data dari ID tanam yang spesifik
 export const getRencanaTanamById = async (req, res) => {
-  const { idTanam } = req.params; // Ambil ID rencana tanam dari parameter URL
+  const { idtanam } = req.params; // Ambil ID rencana tanam dari parameter URL
 
   try {
     const tanam = await Petani.findOne({
-      where: { idtanam: idTanam }, // Ambil data berdasarkan ID rencana tanam
+      where: { idtanam }, // Ambil data berdasarkan ID rencana tanam
     });
 
     if (!tanam) {

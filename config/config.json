@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "cassava",
+    "password": "pwdDB@123",
+    "database": "cassava1",
+    "host": "c-greenproject.org",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "cassava",
+    "password": "pwdDB@123",
+    "database": "cassava1",
+    "host": "c-greenproject.org",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "cassava",
+    "password": "pwdDB@123",
+    "database": "cassava1",
+    "host": "c-greenproject.org",
+    "dialect": "postgres"
+  }
+}

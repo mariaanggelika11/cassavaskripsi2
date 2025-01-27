@@ -5,6 +5,7 @@ import Petani from "./RencanaTanam.js";
 import PerusahaanUser from "./UserPerusahaan.js";
 import Logistikdasar from "./DasarLogistik.js";
 import Logistik from "./TransaksiLogistik.js";
+import Dasarpetani from "./DasarPetani.js";
 import TransaksiPBK from "./TransaksiPabrik.js";
 import TransaksiPR from "./TransaksiPerusahaan.js";
 import limbahpetani from "./LimbahPetani.js";
@@ -134,6 +135,8 @@ Logistik.belongsTo(OrderPemanen, { foreignKey: 'orderPemanenUuid', targetKey: 'u
 
 OrderPemanen.hasMany(limbahpetani, {foreignKey:'orderPemanenUuid', sourceKey: 'uuid' });
 limbahpetani.belongsTo(OrderPemanen,{foreignKey:'orderPemanenUuid', sourceKey: 'uuid' });
+
+OrderPemanen.belongsTo(Dasarpetani, { foreignKey: 'idlahan' });
 
 // Mengekspor model OrderPemanen agar bisa digunakan di bagian lain dari aplikasi
 export default OrderPemanen;

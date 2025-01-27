@@ -4,22 +4,22 @@ import { verifyToken } from "../middleware/AuthUser.js"; // Menggunakan verifyTo
 
 const router = express.Router();
 
-// Route untuk mendapatkan semua petani
+// Route untuk melihat semua data dasar petani (sudah otomatis, petani hanya bisa melihat datanya sendiri, admin dan perusahaan semuanya)
 router.get("/getpetanidasar", verifyToken, getpetanidasar);
 
-// Route untuk mendapatkan data spesifik petani
+// Route untuk mendapatkan data dasar spesifik petani menggunakan id
 router.get("/petanidasar/:id", verifyToken, getPetaniById);
 
-// Route untuk membuat data petani baru
+// Route untuk membuat data dasar petani baru
 router.post("/petanidasar", verifyToken, createPetani);
 
 // // Route untuk menghapus data petani hanya admin
 // router.delete("/petani/:id", verifyToken, deletePetani);
 
-// Route untuk mendapatkan semua ID lahan dari semua petani
+// Route untuk drop down id lahan yang dimiliki, agar petani mudah memasukan id rencana tanam
 router.get('/lahan',verifyToken, getAllLahanOptions);
 
-// Route untuk mendapatkan data dari ID lahan yang spesifik
+// Route untuk mendapatkan data dari lahan yang spesifik menggunakan id lahan
 router.get('/lahan/:idLahan',verifyToken, getLahanById);
 
 export default router;

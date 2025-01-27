@@ -62,10 +62,17 @@ export const getOrderMasuk = async (req, res) => {
     let response;
 
     if (req.role === "perusahaan") {
-      // Produk yang belum memiliki perusahaan
-      response = await Product.findAll({
+      // Ambil data kategori lahan dari tabel Dasarpetani
+      const lahanData = await Dasarpetani.findAll({
+        attributes: ["idlahan", "kategorilahan", "namePerusahaan"],  // Perhatikan kapitalisasi idlahan di sini
+      });
+
+      // Ambil data produk dengan kondisi namaPerusahaan atau emailPerusahaan null
+      const productData = await Product.findAll({
         attributes: [
           "uuid",
+          "idTanam",
+          "idLahan",
           "tanggalPemanenan",
           "statusOrder",
           "varietasSingkong",
@@ -79,18 +86,32 @@ export const getOrderMasuk = async (req, res) => {
         where: {
           [Op.or]: [{ namaPerusahaan: null }, { emailPerusahaan: null }],
         },
-        include: [
-          {
-            model: User,
-            attributes: ["name", "email"], // Sertakan informasi tambahan dari pengguna
-          },
-        ],
       });
-    } else if (req.role === "pabrik") {
+
+      const filteredProductData = productData.filter(product => {
+        // Cek apakah idLahan di Product ada di Dasarpetani (perhatikan perbedaan kapitalisasi idLahan dan idlahan)
+        const lahan = lahanData.find(lahan => lahan.idlahan === product.idLahan);  // idlahan pada Dasarpetani, idLahan pada Product
+
+        if (lahan) {
+          // Jika ditemukan data yang cocok, periksa kategori lahan dan namaPerusahaan
+          if (lahan.kategorilahan === "Plasma" && lahan.namePerusahaan === req.name) {
+            return true; // Jika Plasma dan namePerusahaan cocok, tampilkan data
+          } else if (lahan.kategorilahan === "Inti") {
+            return true; // Jika kategori lahan Inti, tampilkan data
+          }
+        }
+        return false; // Jika tidak ada kecocokan, data tidak ditampilkan
+      });
+
+      response = filteredProductData;
+
+    }else if (req.role === "pabrik") {
       // Produk yang memiliki namaPerusahaan tetapi belum memiliki pabrik
       response = await Product.findAll({
         attributes: [
           "uuid",
+          "idTanam",
+          "idLahan",
           "tanggalPemanenan",
           "statusOrder",
           "varietasSingkong",
@@ -121,6 +142,8 @@ export const getOrderMasuk = async (req, res) => {
       response = await Product.findAll({
         attributes: [
           "uuid",
+          "idTanam",
+          "idLahan",
           "tanggalPemanenan",
           "statusOrder",
           "varietasSingkong",
@@ -151,6 +174,8 @@ export const getOrderMasuk = async (req, res) => {
       response = await Product.findAll({
         attributes: [
           "uuid",
+          "idTanam",
+          "idLahan",
           "tanggalPemanenan",
           "statusOrder",
           "varietasSingkong",
@@ -265,6 +290,8 @@ export const getOrderBerlangsung = async (req, res) => {
       response = await Product.findAll({
         attributes: [
           "uuid",
+          "idTanam",
+          "idLahan",
           "tanggalPemanenan",
           "statusOrder",
           "varietasSingkong",
@@ -346,6 +373,8 @@ export const getOrderBerlangsung = async (req, res) => {
       response = await Product.findAll({
         attributes: [
           "uuid",
+          "idTanam",
+          "idLahan",
           "tanggalPemanenan",
           "statusOrder",
           "varietasSingkong",
@@ -381,12 +410,19 @@ export const getOrderBerlangsung = async (req, res) => {
       response = await Product.findAll({
         attributes: [
           "uuid",
+          "idTanam",
           "idLahan",
           "tanggalPemanenan",
           "statusOrder",
           "varietasSingkong",
           "estimasiBerat",
           "estimasiHarga",
+          "namaLogistik",
+          "emailLogistik",
+          "namaPabrik",
+          "emailPabrik",
+          "namaPerusahaan",
+          "emailPerusahaan",
         ],
         where: {
           userId: req.userId,
@@ -456,6 +492,8 @@ export const getOrderBerlangsung = async (req, res) => {
       response = await Product.findAll({
         attributes: [
           "uuid",
+          "idTanam",
+          "idLahan",
           "tanggalPemanenan",
           "statusOrder",
           "varietasSingkong",
@@ -578,6 +616,8 @@ export const getHistoryOrder = async (req, res) => {
       response = await Product.findAll({
         attributes: [
           "uuid",
+          "idTanam",
+          "idLahan",
           "tanggalPemanenan",
           "statusOrder",
           "varietasSingkong",
@@ -634,6 +674,8 @@ export const getHistoryOrder = async (req, res) => {
       response = await Product.findAll({
         attributes: [
           "uuid",
+          "idTanam",
+          "idLahan",
           "tanggalPemanenan",
           "statusOrder",
           "varietasSingkong",
@@ -715,6 +757,8 @@ export const getHistoryOrder = async (req, res) => {
       response = await Product.findAll({
         attributes: [
           "uuid",
+          "idTanam",
+          "idLahan",
           "tanggalPemanenan",
           "statusOrder",
           "varietasSingkong",
@@ -750,12 +794,19 @@ export const getHistoryOrder = async (req, res) => {
       response = await Product.findAll({
         attributes: [
           "uuid",
+          "idTanam",
           "idLahan",
           "tanggalPemanenan",
           "statusOrder",
           "varietasSingkong",
           "estimasiBerat",
           "estimasiHarga",
+          "namaPerusahaan",
+          "emailPerusahaan",
+          "namaLogistik",
+          "emailLogistik",
+          "namaPabrik",
+          "emailPabrik",
         ],
         where: {
           userId: req.userId,
@@ -825,6 +876,8 @@ export const getHistoryOrder = async (req, res) => {
       response = await Product.findAll({
         attributes: [
           "uuid",
+          "idTanam",
+          "idLahan",
           "tanggalPemanenan",
           "statusOrder",
           "varietasSingkong",
@@ -974,7 +1027,8 @@ export const getHistoryOrderPdf = async (req, res) => {
     const response = await Product.findOne({
       attributes: [
         "uuid",
-        "idLahan",
+        "idTanam",
+          "idLahan",
         "tanggalPemanenan",
         "statusOrder",
         "varietasSingkong",
@@ -1195,7 +1249,8 @@ export const getProductById = async (req, res) => {
     const response = await Product.findOne({
       attributes: [
         "uuid",
-        "idLahan",
+        "idTanam",
+          "idLahan",
         "tanggalPemanenan",
         "statusOrder",
         "varietasSingkong",
@@ -1405,12 +1460,17 @@ export const createProduct = async (req, res) => {
       userId: req.userId,
     });
 
-    // Format estimasi harga ke format Rp
-    const formattedEstimasiHarga = new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0 // Tanpa desimal
-    }).format(newProduct.estimasiHarga);
+    // Format estimasi harga ke format dengan titik sebagai pemisah ribuan
+    const formattedEstimasiHarga = newProduct.estimasiHarga.toLocaleString('id-ID', {
+      minimumFractionDigits: 0, // Tanpa desimal
+      maximumFractionDigits: 0,
+    });
+
+    // Format estimasi berat ke format dengan titik sebagai pemisah ribuan
+    const formattedEstimasiBerat = newProduct.estimasiBerat.toLocaleString('id-ID', {
+      minimumFractionDigits: 0, // Tanpa desimal
+      maximumFractionDigits: 0,
+    });
 
     // Kirim respon
     res.status(201).json({
@@ -1422,7 +1482,7 @@ export const createProduct = async (req, res) => {
         tanggalPemanenan: newProduct.tanggalPemanenan,
         statusOrder: newProduct.statusOrder,
         varietasSingkong: newProduct.varietasSingkong,
-        estimasiBerat: newProduct.estimasiBerat,
+        estimasiBerat: formattedEstimasiBerat,
         estimasiHarga: formattedEstimasiHarga,
         userId: newProduct.userId,
       },
@@ -1441,7 +1501,6 @@ export const createProduct = async (req, res) => {
     res.status(500).json({ msg: error.message });
   }
 };
-
 
 
 

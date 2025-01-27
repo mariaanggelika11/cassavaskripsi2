@@ -57,6 +57,8 @@ export const getpetanidasar = async (req, res) => {
   }
 };
 
+
+
 // Fungsi untuk membuat data petani baru
 export const createPetani = async (req, res) => {
   try {
@@ -217,7 +219,17 @@ export const getLahanById = async (req, res) => {
       return res.status(404).json({ msg: "Lahan tidak ditemukan." });
     }
 
-    res.status(200).json(lahan); // Kirim respons dengan data lahan
+    // Format angka luas lahan dengan tanda titik sesuai lokal Indonesia
+    const formatNumber = (value) =>
+      new Intl.NumberFormat("id-ID", { minimumFractionDigits: 0 }).format(value);
+
+    // Tambahkan format pada luaslahan
+    const formattedLahan = {
+      ...lahan.dataValues,
+      luaslahan: formatNumber(lahan.dataValues.luaslahan || 0),
+    };
+
+    res.status(200).json(formattedLahan); // Kirim respons dengan data lahan yang diformat
   } catch (error) {
     res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
   }
