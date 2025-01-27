@@ -1,6 +1,7 @@
 import Petani from "../models/RencanaTanam.js";
 import Petanidasar from "../models/DasarPetani.js";
 import User from "../models/UserModel.js";
+import Product from "../models/OrderPanen.js";
 import jwt from "jsonwebtoken";
 import { Op } from "sequelize";
 
@@ -363,6 +364,41 @@ export const updateStatusRencanaTanam = async (req, res) => {
   }
 };
 
+export const updateStatusToPanenSelesai = async (req, res) => {
+  const { id } = req.params; // ID idtanam yang akan diupdate
+
+  try {
+    // Memastikan hanya pengguna dengan peran 'petani' atau 'perusahaan' yang bisa mengubah status
+    if (req.role !== "petani" && req.role !== "perusahaan") {
+      return res.status(403).json({
+        msg: "Hanya pengguna dengan role 'petani' atau 'perusahaan' yang dapat mengubah status menjadi 'Selesai Panen'.",
+      });
+    }
+
+    // Cari data berdasarkan idtanam
+    const petani = await Petani.findOne({ where: { idtanam: id } });
+
+    if (!petani) {
+      return res.status(404).json({ msg: "Data dengan idtanam tersebut tidak ditemukan." });
+    }
+
+    // Periksa apakah status sudah "Selesai Panen"
+    if (petani.statusRencanaTanam === "Selesai Panen") {
+      return res.status(400).json({ msg: "Status rencana tanam sudah menjadi 'Selesai Panen' dan tidak dapat diubah lagi." });
+    }
+
+    // Update status menjadi "Selesai Panen"
+    await petani.update({ statusRencanaTanam: "Selesai Panen" });
+
+    res.status(200).json({
+      msg: `Status rencana tanam berhasil diubah menjadi 'Selesai Panen'`,
+    });
+  } catch (error) {
+    console.error("Error saat mengubah status ke 'Selesai Panen':", error.message);
+    res.status(500).json({ msg: error.message });
+  }
+};
+
 
 
 // Fungsi untuk memperbarui data petani
@@ -513,3 +549,170 @@ export const getRencanaTanamById = async (req, res) => {
     res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
   }
 };
+
+export const countPetaniByGrade = async (req, res) => {
+  try {
+    const { role, userId } = req;
+
+    // Filter awal berdasarkan role
+    let whereClause = {
+      statusRencanaTanam: { [Op.ne]: "Selesai Panen" }, // Menyaring petani dengan status "Selesai Panen"
+    };
+
+    if (role === "petani") {
+      whereClause.userId = userId;
+    }
+
+    // Query data petani berdasarkan varietassingkong dan statusRencanaTanam
+    const gradeCounts = await Petani.findAll({
+      where: whereClause,
+      attributes: [
+        "varietassingkong",
+        [
+          Petani.sequelize.fn("COUNT", Petani.sequelize.col("varietassingkong")),
+          "count",
+        ],
+      ],
+      group: ["varietassingkong"],
+    });
+
+    // Format hasil menjadi objek terstruktur
+    const result = {
+      GradeA: 0,
+      GradeB: 0,
+      GradeC: 0,
+    };
+
+    gradeCounts.forEach((record) => {
+      const grade = record.varietassingkong;
+      const count = parseInt(record.dataValues.count, 10);
+
+      if (grade === "Grade A") result.GradeA += count;
+      else if (grade === "Grade B") result.GradeB += count;
+      else if (grade === "Grade C") result.GradeC += count;
+    });
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error saat menghitung jumlah petani per grade:", error.message);
+    res.status(500).json({ msg: error.message });
+  }
+};
+
+export const getHistoryRencanaTanam = async (req, res) => {
+  try {
+    const { role, userId, name: namePerusahaan } = req;
+    let response;
+
+    // Langkah 1: Filter awal berdasarkan statusRencanaTanam "Rencana Tanam Disetujui"
+    const petaniRecords = await Petani.findAll({
+      where: { statusRencanaTanam: "Selesai Panen" },
+      attributes: [
+        "idlahan",
+        "userId",
+        "statusRencanaTanam",
+        "estimasiproduksi",
+        "jumlahpupuk",
+      ],
+    });
+
+    if (!petaniRecords.length) {
+      return res.status(200).json([]); // Jika tidak ada data
+    }
+
+    const validLahanIds = petaniRecords.map((record) => record.idlahan);
+
+    // Langkah 2: Proses berdasarkan role
+    if (role === "admin") {
+      response = await Petanidasar.findAll({
+        where: { idlahan: { [Op.in]: validLahanIds } },
+      });
+    } else if (role === "petani") {
+      response = await Petanidasar.findAll({
+        where: { idlahan: { [Op.in]: validLahanIds }, userId },
+      });
+    } else if (role === "perusahaan") {
+      response = await Petanidasar.findAll({
+        where: {
+          idlahan: { [Op.in]: validLahanIds },
+          [Op.or]: [{ namePerusahaan }, { namePerusahaan: null }],
+        },
+      });
+    } else {
+      return res.status(403).json({ msg: "Akses Ditolak" });
+    }
+
+    // Validasi response sebelum melakukan mapping
+    if (!response || !Array.isArray(response) || response.length === 0) {
+      return res.status(200).json([]); // Jika tidak ada data
+    }
+
+    // Langkah 3: Format angka untuk hasil akhir
+    const formatNumber = (value) =>
+      new Intl.NumberFormat("id-ID", { minimumFractionDigits: 0 }).format(value);
+
+    // Langkah 4: Ambil Rencana Tanam Info dari Petani berdasarkan idlahan
+    const getRencanaTanamInfo = async (idlahan) => {
+      const petaniData = await Petani.findAll({
+        where: { idlahan },
+        attributes: [
+          "idtanam",
+          "statusRencanaTanam",
+          "varietassingkong",
+          "estimasiproduksi",
+          "jenispupuk",
+          "jumlahpupuk",
+          "catatantambahan",
+          "tanggalRencanaTanam",
+          "tanggalRencanaPanen",
+        ],
+      });
+      return petaniData.map((p) => ({
+        idtanam: p.idtanam,
+        statusRencanaTanam: p.statusRencanaTanam,
+        varietassingkong: p.varietassingkong,
+        estimasiproduksi: formatNumber(p.estimasiproduksi || 0),
+        jenispupuk: p.jenispupuk,
+        jumlahpupuk: formatNumber(p.jumlahpupuk || 0),
+        catatantambahan: p.catatantambahan,
+        tanggalRencanaTanam: p.tanggalRencanaTanam,
+        tanggalRencanaPanen: p.tanggalRencanaPanen,
+      }));
+    };
+
+    const formattedResponse = await Promise.all(
+      response.map(async (record) => {
+        const petanidasar = {
+          idlahan: record.idlahan,
+          kategorilahan: record.kategorilahan,
+          namePerusahaan: record.namePerusahaan || null,
+          userId: record.userId,
+          userUuid: record.userUuid,
+          lokasilahan: record.lokasilahan,
+          luaslahan: formatNumber(record.luaslahan || 0),
+          periodeTanamMulai: record.periodeTanamMulai,
+          periodeTanamSelesai: record.periodeTanamSelesai,
+          createdAt: record.createdAt,
+          updatedAt: record.updatedAt,
+        };
+
+        // Ambil informasi Rencana Tanam berdasarkan idlahan
+        const rencanaTanamInfo = await getRencanaTanamInfo(record.idlahan);
+
+        return {
+          petanidasar,
+          rencanaTanamInfo,
+        };
+      })
+    );
+
+    res.status(200).json(formattedResponse);
+  } catch (error) {
+    console.error("Error saat mendapatkan riwayat rencana tanam:", error.message);
+    res.status(500).json({ msg: error.message });
+  }
+};
+
+
+
+

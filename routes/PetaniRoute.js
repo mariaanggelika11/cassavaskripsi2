@@ -1,5 +1,5 @@
 import express, { Router } from "express";
-import { getAllrencanatanam, getRencanaTanamById, getPetanis, createPetani, updatePetani, getPetaniById, deletePetani, updateStatusRencanaTanam, getPetanisApproved } from "../controllers/Petani.js";
+import { getHistoryRencanaTanam, countPetaniByGrade, getAllrencanatanam, getRencanaTanamById, getPetanis, createPetani, updatePetani, getPetaniById, deletePetani, updateStatusRencanaTanam, getPetanisApproved, updateStatusToPanenSelesai } from "../controllers/Petani.js";
 import { verifyToken } from "../middleware/AuthUser.js"; // Menggunakan verifyToken dari AuthUser.js
 
 
@@ -32,4 +32,13 @@ router.get("/rencanatanam", verifyToken, getAllrencanatanam);
 
 // Route untuk melihat lebih detail dari id tanam
 router.get("/rencanatanam/:idtanam",verifyToken, getRencanaTanamById);
+
+//Route jumlah varietas yang sedang ditanam 
+router.get("/jumlahvarietas", verifyToken, countPetaniByGrade);
+
+// Rute menyelesaikan rencana tanam jika order panen sudah selesai, dimasukan pada order rencana tanam berlangsung
+router.patch("/rencanatanamselesai/:id" , verifyToken, updateStatusToPanenSelesai);
+
+// Rute history rencana tanam selesai
+router.get("/historytanam", verifyToken, getHistoryRencanaTanam);
 export default router;
