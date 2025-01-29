@@ -1,6 +1,6 @@
 // File route: logistikdasar.route.js
 import express from "express";
-import { createLogistik, getAllLogistik, getLogistikById, updateLogistik, deleteLogistik, getLogistikByUserId } from "../controllers/Dasarlogistik.js";
+import { createLogistik, getAllLogistik, getLogistikById, updateLogistik, deleteLogistik, getLogistikByUserId,getidKendaraan } from "../controllers/Dasarlogistik.js";
 import { verifyToken } from "../middleware/AuthUser.js"; // Menggunakan verifyToken dari AuthUser.js
 
 
@@ -22,5 +22,8 @@ router.put("/logistikdasar/:id", verifyToken, updateLogistik);
 
 // Route untuk menghapus data logistik
 router.delete("/logistikdasar/:id", verifyToken, deleteLogistik);
+
+//Route dropdown idKendaraan
+router.get("/idkendaraan", verifyToken, getidKendaraan);
 
 export default router;

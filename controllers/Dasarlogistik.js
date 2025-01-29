@@ -51,6 +51,41 @@ const getAllLogistik = async (req, res) => {
   }
 };
 
+export const getidKendaraan = async (req, res) => {
+  try {
+    let kendaraan;
+
+    // Validasi peran pengguna
+    if (req.role === "admin" || req.role === "perusahaan") {
+      // Admin dan perusahaan dapat melihat semua idKendaraan
+      kendaraan = await Logistikdasar.findAll({
+        attributes: ['idKendaraan'], // Ambil hanya idKendaraan
+        include: [{
+          model: Users,
+          as: "user", // Pastikan alias sesuai dengan relasi di model
+          attributes: ['uuid', 'name', 'role'], // Ambil hanya uuid, name, dan role
+        }],
+      });
+    } else {
+      // Pengguna lain hanya dapat melihat idKendaraan miliknya sendiri
+      kendaraan = await Logistikdasar.findAll({
+        where: { userId: req.userId }, // Filter berdasarkan userId
+        attributes: ['idKendaraan'], // Ambil hanya idKendaraan
+       
+      });
+    }
+
+    // Jika tidak ada data ditemukan
+    if (kendaraan.length === 0) {
+      return res.status(404).json({ message: "Data kendaraan tidak ditemukan" });
+    }
+
+    res.json(kendaraan); // Kirim data kendaraan sebagai respons
+  } catch (error) {
+    console.error("Error saat mengambil data kendaraan:", error.message);
+    res.status(500).json({ message: error.message });
+  }
+};
 
 // Fungsi untuk mengambil data logistik berdasarkan UUID
 const getLogistikById = async (req, res) => {
