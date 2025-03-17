@@ -1,6 +1,6 @@
 // File routes: pabrikproduksi.js
 import express from 'express';
-import { createPabrikproduksi, getAllPabrikproduksi, getPabrikproduksiById, getPabrikproduksiUserId, updatePabrikproduksi, deletePabrikproduksi } from "../controllers/ProduksiPBK.js";
+import { createPabrikproduksi, getAllPabrikproduksi, getPabrikproduksiById, getPabrikproduksiUserId, updatePabrikproduksi, deletePabrikproduksi, getValidOrderUUID } from "../controllers/ProduksiPBK.js";
 import { verifyToken } from '../middleware/AuthUser.js';
 const router = express.Router();
 
@@ -21,5 +21,8 @@ router.put('/produksi/:id',verifyToken, updatePabrikproduksi);
 
 // Route untuk menghapus data pabrik produksi
 router.delete('/produksi/:id',verifyToken, deletePabrikproduksi);
+
+// Route dropdown id order untuk pabrik dengan status order selesai dan dia yg acc order
+router.get('/dropdownorder', verifyToken, getValidOrderUUID);
 
 export default router;

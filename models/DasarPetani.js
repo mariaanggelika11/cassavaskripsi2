@@ -40,8 +40,8 @@ const Petanidasar = db.define(
       allowNull: true, // Awalnya dapat null, namun divalidasi kustom
       validate: {
         customValidation(value) {
-          if (this.kategorilahan === "Plasma" && (!value || value.trim() === "")) {
-            throw new Error("Nama perusahaan harus diisi jika kategorilahan adalah 'Plasma'.");
+          if (this.kategorilahan === "Inti" && (!value || value.trim() === "")) {
+            throw new Error("Nama perusahaan harus diisi jika kategorilahan adalah 'Inti'.");
           }
         },
       },

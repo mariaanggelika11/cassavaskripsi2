@@ -32,7 +32,7 @@ app.use((req, res, next) => {
 });
 
 // List of allowed origins
-const allowedOrigins = ["*", "https://cassava-telti.isi-net.org"];
+const allowedOrigins = ["*","https://cassava-super.c-greenproject.org", "https://cassava-telti.isi-net.org"];
 
 // Enable CORS
 app.use(

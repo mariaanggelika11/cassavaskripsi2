@@ -78,6 +78,38 @@ const createPabrikproduksi = async (req, res) => {
   }
 };
 
+export const getValidOrderUUID = async (req, res) => {
+  try {
+    // Validasi role pengguna harus 'pabrik'
+    if (req.role !== "pabrik") {
+      return res.status(403).json({
+        msg: "Hanya pengguna dengan role 'pabrik' yang dapat mengakses daftar order."
+      });
+    }
+
+    // Ambil order yang sesuai dengan kondisi
+    const orders = await OrderPemanen.findAll({
+      attributes: ['uuid'],
+      where: {
+        namaPabrik: req.name, // Hanya order untuk pabrik ini
+        statusorder: "order selesai" // Hanya order yang sudah selesai
+      }
+    });
+
+    if (!orders.length) {
+      return res.status(404).json({ msg: "Tidak ada order selesai untuk pabrik ini." });
+    }
+
+    // Mengambil hanya UUID yang valid
+    const orderUUIDs = orders.map(order => order.uuid);
+
+    res.status(200).json(orderUUIDs);
+  } catch (error) {
+    console.error("Error saat mengambil daftar order UUID:", error.message);
+    res.status(500).json({ msg: error.message });
+  }
+};
+
 
 // Fungsi untuk mengambil semua data pabrik produksi
 const getAllPabrikproduksi = async (req, res) => {
@@ -90,6 +122,7 @@ const getAllPabrikproduksi = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 
 // Fungsi untuk mengambil data pabrik produksi berdasarkan ID
@@ -178,5 +211,6 @@ const deletePabrikproduksi = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 export {  createPabrikproduksi, getAllPabrikproduksi, getPabrikproduksiById, getPabrikproduksiUserId, updatePabrikproduksi, deletePabrikproduksi };

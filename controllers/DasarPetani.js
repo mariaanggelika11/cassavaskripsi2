@@ -188,23 +188,28 @@ export const deletePetani = async (req, res) => {
 };
 
 /// Fungsi untuk mendapatkan semua ID lahan dari semua petani
+/// Fungsi untuk mendapatkan semua ID lahan dari petani yang sedang login
 export const getAllLahanOptions = async (req, res) => {
   try {
+    const userId = req.userId; // Pastikan req.user.id sudah di-set dari middleware autentikasi
+
     const petani = await Petani.findAll({
-      attributes: ['idlahan'], // Ambil hanya ID lahan
+      where: { userId }, // Ambil hanya ID lahan milik petani yang login
+      attributes: ['idlahan'],
     });
 
     if (!petani.length) {
-      return res.status(404).json({ msg: "Tidak ada lahan yang ditemukan." });
+      return res.status(404).json({ msg: "Tidak ada lahan yang ditemukan untuk petani ini." });
     }
 
     // Mengambil hanya ID lahan
     const lahanOptions = petani.map(p => p.idlahan);
-    res.status(200).json(lahanOptions); // Kirim respons dengan ID lahan
+    res.status(200).json(lahanOptions);
   } catch (error) {
-    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
+    res.status(500).json({ msg: error.message });
   }
 };
+
 
 // Fungsi untuk mendapatkan data dari ID lahan yang spesifik
 export const getLahanById = async (req, res) => {

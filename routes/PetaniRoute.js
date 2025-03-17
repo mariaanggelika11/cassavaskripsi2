@@ -19,12 +19,12 @@ router.get("/petani/:id", verifyToken, getPetaniById);
 router.post("/petani", verifyToken, createPetani);
 
 // Route untuk mengedit rencana tanam oleh petani, jika order di setujui (ini dimasukan ke bagian petanis approved)
-router.put("/petani/:id", verifyToken, updatePetani);
+router.put("/petanisapproved/:idtanam", verifyToken, updatePetani);
 
 // Route untuk menghapus data petani (tidak usah dipakai)
 router.delete("/petani/:id", verifyToken, deletePetani);
 
-// Route menyetujui rencana tanam oleh perusahaan
+// Route menyetujui rencana tanam oleh perusahaan 
 router.patch("/rencanatanam/:id", verifyToken, updateStatusRencanaTanam);
 
 // Route untuk dropdown rencena tanam ketika ingin add order panen

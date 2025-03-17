@@ -266,7 +266,6 @@ export const getOrderBerlangsung = async (req, res) => {
               "tanggalPengiriman",
               "waktuPengiriman",
               "estimasiWaktuTiba",
-              // Kolom berikut akan muncul tetapi bernilai null jika belum diisi
               "aktualWaktuTiba",
               "catatanEfisiensiRute",
               "biayaTransportasi",
@@ -283,6 +282,32 @@ export const getOrderBerlangsung = async (req, res) => {
                 { estimasiWaktuTiba: { [Op.ne]: null } },
               ],
             },
+            order: [
+              ["orderPemanenUuid", "ASC"], // Urutkan berdasarkan orderPemanenUuid
+              ["idKendaraan", "ASC"], // Jika diperlukan, urutkan juga berdasarkan idKendaraan
+            ],
+          },
+          {
+            model: TransaksiPR,
+            attributes: ["orderPemanenUuid", "hargaaktual", "catatanharga", "tanggalselesai"],
+            required: false,
+          },
+          {
+            model: TransaksiPBK,
+            attributes: ["orderPemanenUuid", "tanggalPenerimaan", "beratTotalDiterima", "catatanKualitas", "evaluasiKualitas"],
+            required: false,
+          },
+          {
+            model: limbahpetani,
+            attributes: [
+              "beratLimbahBatang",
+              "catatanLimbahBatang",
+              "beratLimbahDaun",
+              "catatanLimbahDaun",
+              "beratLimbahAkar",
+              "catatanLimbahAkar",
+            ],
+            required: false,
           },
         ],
       });
@@ -400,8 +425,54 @@ export const getOrderBerlangsung = async (req, res) => {
             attributes: ["name", "email"],
           },
           {
+            model: Logistik,
+            attributes: [
+              "orderPemanenUuid",
+              "idKendaraan",
+              "tanggalPengiriman",
+              "waktuPengiriman",
+              "estimasiWaktuTiba",
+              "aktualWaktuTiba",
+              "catatanEfisiensiRute",
+              "biayaTransportasi",
+              "kondisiPengiriman",
+              "catatanDariPenerima",
+            ],
+            required: false, // Tidak memaksa adanya relasi
+            where: {
+              [Op.or]: [
+                { orderPemanenUuid: { [Op.ne]: null } },
+                { idKendaraan: { [Op.ne]: null } },
+                { tanggalPengiriman: { [Op.ne]: null } },
+                { waktuPengiriman: { [Op.ne]: null } },
+                { estimasiWaktuTiba: { [Op.ne]: null } },
+              ],
+            },
+            order: [
+              ["orderPemanenUuid", "ASC"], // Urutkan berdasarkan orderPemanenUuid
+              ["idKendaraan", "ASC"], // Jika diperlukan, urutkan juga berdasarkan idKendaraan
+            ],
+          },
+          {
+            model: TransaksiPR,
+            attributes: ["orderPemanenUuid", "hargaaktual", "catatanharga", "tanggalselesai"],
+            required: false,
+          },
+          {
             model: TransaksiPBK,
             attributes: ["orderPemanenUuid", "tanggalPenerimaan", "beratTotalDiterima", "catatanKualitas", "evaluasiKualitas"],
+            required: false,
+          },
+          {
+            model: limbahpetani,
+            attributes: [
+              "beratLimbahBatang",
+              "catatanLimbahBatang",
+              "beratLimbahDaun",
+              "catatanLimbahDaun",
+              "beratLimbahAkar",
+              "catatanLimbahAkar",
+            ],
             required: false,
           },
         ],

@@ -1,5 +1,5 @@
 import express from "express";
-import { getPabrik, createPabrik, updatePabrik, deletePabrik, getPabrikById } from "../controllers/Pabrik.js";
+import { getPabrik, createPabrik, updatePabrik, deletePabrik, getPabrikById, getAllUUIDOptions } from "../controllers/Pabrik.js";
 import { verifyToken } from "../middleware/AuthUser.js"; // Menggunakan verifyToken dari AuthUser.js
 
 const router = express.Router();
@@ -14,5 +14,6 @@ router.post("/pabrik", verifyToken, createPabrik);
 router.put("/pabrik/:id", verifyToken, updatePabrik);
 // Route untuk menghapus data pabrik
 router.delete("/pabrik/:id", verifyToken, deletePabrik);
-
+// Route dropdown id order
+router.get("/getidorder", verifyToken, getAllUUIDOptions );
 export default router;

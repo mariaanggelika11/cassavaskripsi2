@@ -1,5 +1,6 @@
 import Pabrik from "../models/DasarPabrik.js"; // Import model Pabrik dari path yang sesuai
 import User from "../models/UserModel.js"; // Import model User dari path yang sesuai
+import Product from "../models/OrderPanen.js";
 
 // Fungsi untuk mendapatkan semua data pabrik
 export const getPabrik = async (req, res) => {
@@ -165,3 +166,29 @@ export const deletePabrik = async (req, res) => {
     res.status(500).json({ msg: error.message }); // Berikan respons error dengan pesan
   }
 };
+
+export const getAllUUIDOptions = async (req, res) => {
+  try {
+    const name = req.name; // Ambil namaPabrik langsung dari req
+
+    if (!name) {
+      return res.status(400).json({ msg: "Nama pabrik tidak ditemukan." });
+    }
+
+    const products = await Product.findAll({
+      where: { namaPabrik: name }, // Filter berdasarkan namaPabrik
+      attributes: ['uuid'], // Ambil hanya UUID
+    });
+
+    if (!products.length) {
+      return res.status(404).json({ msg: "Tidak ada UUID yang ditemukan untuk pabrik ini." });
+    }
+
+    // Mengambil hanya UUID
+    const uuidOptions = products.map(p => p.uuid);
+    res.status(200).json(uuidOptions); // Kirim respons dengan UUID
+  } catch (error) {
+    res.status(500).json({ msg: error.message }); // Kirim respons error jika terjadi kesalahan server
+  }
+};
+
