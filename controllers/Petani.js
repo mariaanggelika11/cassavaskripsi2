@@ -88,6 +88,13 @@ export const getPetanis= async (req, res) => {
 
     const formattedResponse = await Promise.all(
       response.map(async (record) => {
+        // Ambil informasi tambahan dari User yang terkait
+        const userInfo = await User.findOne({
+          where: { uuid: record.userUuid },
+          attributes: ["name", "email"], // Hanya ambil atribut yang diperlukan
+        });
+    
+        // Objek utama dengan data petanidasar
         const petanidasar = {
           idlahan: record.idlahan,
           kategorilahan: record.kategorilahan,
@@ -100,16 +107,19 @@ export const getPetanis= async (req, res) => {
           periodeTanamSelesai: record.periodeTanamSelesai,
           createdAt: record.createdAt,
           updatedAt: record.updatedAt,
+          user: userInfo || null, // Tambahkan informasi user jika ditemukan
         };
-
+    
+        // Ambil informasi rencana tanam terkait
         const rencanaTanamInfo = await getRencanaTanamInfo(record.idlahan);
-
+    
         return {
           petanidasar,
           rencanaTanamInfo,
         };
       })
     );
+    
 
     res.status(200).json({ status: "success", data: formattedResponse });
   } catch (error) {

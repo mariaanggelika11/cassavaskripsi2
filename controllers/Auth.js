@@ -6,45 +6,60 @@ const JWT_SECRET = process.env.JWT_SECRET || "bbyifdrdd6r09u8fdxesesedtghbjkjkn"
 
 export const Login = async (req, res) => {
   const { email, password } = req.body;
+  const startTime = Date.now(); // Catat waktu mulai eksekusi
 
   try {
-    // Cari pengguna berdasarkan email
-    const user = await User.findOne({
-      where: { email: email },
-    });
+    // Timeout handler untuk mencegah proses terlalu lama
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Request timeout")), 5000)
+    );
 
-    // Jika pengguna tidak ditemukan, kirim respons error
-    if (!user) {
-      return res.status(404).json({ msg: "Mohon login ke akun Anda!" });
-    }
+    const processLogin = (async () => {
+      // Log permintaan masuk
+      console.log(`[${new Date().toISOString()}] Login attempt: ${email}`);
 
-    // Bandingkan password yang dimasukkan dengan hash yang disimpan di database
-    const match = await bcrypt.compare(password, user.password);
+      // Cari pengguna berdasarkan email
+      const user = await User.findOne({ where: { email: email } });
 
-    // Jika password tidak cocok, kirim respons error
-    if (!match) {
-      return res.status(401).json({ msg: "Mohon login ke akun Anda!" });
-    }
+      if (!user) {
+        console.warn(`[${new Date().toISOString()}] User not found: ${email}`);
+        return res.status(404).json({ msg: "Akun tidak ditemukan. Mohon daftar terlebih dahulu!" });
+      }
 
-    // Jika berhasil, buat token JWT
-    const token = jwt.sign({ id: user.uuid }, JWT_SECRET, {
-      expiresIn: "1d", // Token berlaku selama 1 hari
-    });
+      // Bandingkan password yang dimasukkan dengan hash di database
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) {
+        console.warn(`[${new Date().toISOString()}] Password mismatch for user: ${email}`);
+        return res.status(401).json({ msg: "Password salah. Coba lagi!" });
+      }
 
-    console.log("Generated token:", token); // Log token yang dihasilkan
+      // Buat token JWT
+      const token = jwt.sign({ id: user.uuid }, JWT_SECRET, { expiresIn: "1d" });
 
-    // Kirim respons sukses bersama dengan token dan data pengguna
-    res.status(200).json({
-      token,
-      userId: user.uuid,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    });
+      console.log(`[${new Date().toISOString()}] Token generated for user: ${email}`);
+      console.log(`Login process took ${Date.now() - startTime} ms`); // Cek durasi proses
+
+      // Kirim respons sukses
+      res.status(200).json({
+        token,
+        userId: user.uuid,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      });
+    })();
+
+    // Jalankan proses dengan timeout
+    await Promise.race([processLogin, timeout]);
+
   } catch (error) {
-    // Tangani kesalahan server jika terjadi
-    console.error("Login error:", error);
-    res.status(500).json({ msg: "Terjadi kesalahan saat login" });
+    console.error(`[${new Date().toISOString()}] Login error:`, error);
+
+    if (error.message === "Request timeout") {
+      return res.status(408).json({ msg: "Permintaan terlalu lama, coba lagi nanti!" });
+    }
+
+    res.status(500).json({ msg: "Terjadi kesalahan saat login, silakan coba lagi!" });
   }
 };
 

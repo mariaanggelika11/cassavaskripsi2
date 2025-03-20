@@ -1,5 +1,6 @@
 // File controller: PabrikproduksiController.js
 import Pabrikproduksi from "../models/ProduksiHarianPBK.js";
+import TransaksiPBK from "../models/TransaksiPabrik.js";
 import Users from "../models/UserModel.js";
 import OrderPemanen from "../models/OrderPanen.js";
 import Pabrik from "../models/DasarPabrik.js";
@@ -32,6 +33,7 @@ const createPabrikproduksi = async (req, res) => {
       return res.status(400).json({ msg: "idOrderDipakai harus diisi." });
     }
 
+    // Ambil data order berdasarkan UUID
     const order = await OrderPemanen.findOne({ where: { uuid: Idorderdipakai } });
     if (!order) {
       return res.status(404).json({ msg: "idOrderDipakai tidak ditemukan." });
@@ -43,7 +45,32 @@ const createPabrikproduksi = async (req, res) => {
       });
     }
 
-    // Validasi kapasitas produksi
+    // Ambil total berat diterima dari TransaksiPBK berdasarkan orderPemanenUUID
+    const transaksi = await TransaksiPBK.findOne({
+      where: { orderPemanenUuid: Idorderdipakai },
+    });
+
+    if (!transaksi) {
+      return res.status(404).json({ msg: "Data TransaksiPBK tidak ditemukan untuk order ini." });
+    }
+
+    const beratTotalDiterima = transaksi.beratTotalDiterima || 0;
+
+    // Ambil total jumlah produksi harian yang sudah ada untuk Idorderdipakai
+    const totalProduksiSebelumnya = await Pabrikproduksi.sum("jumlahproduksiharian", {
+      where: { Idorderdipakai },
+    });
+
+    const sisaBerat = beratTotalDiterima - (totalProduksiSebelumnya || 0);
+
+    // Validasi jika jumlah produksi harian melebihi sisa berat yang tersedia
+    if (jumlahproduksiharian > sisaBerat) {
+      return res.status(400).json({
+        msg: `Jumlah produksi harian (${jumlahproduksiharian}) melebihi kapasitas sisa berat singkong id tersebut  (${sisaBerat}).`
+      });
+    }
+
+    // Validasi kapasitas produksi pabrik
     const pabrik = await Pabrik.findOne({ where: { userId: req.userId } });
     if (!pabrik) {
       return res.status(404).json({ msg: "Pabrik tidak ditemukan untuk pengguna ini." });
@@ -68,15 +95,17 @@ const createPabrikproduksi = async (req, res) => {
       catatanlimbah,
       limbahpadat,
       catatanlimbahpadat,
-      userId: req.userId, // Mengaitkan data pabrik dengan userId dari pengguna yang login
+      userId: req.userId,
     });
 
-    res.status(201).json({ newPabrik, msg: "Data pabrik berhasil dibuat." }); // Berikan respons dengan data pabrik baru yang dibuat
+    res.status(201).json({ newPabrik, msg: "Data pabrik berhasil dibuat." });
+
   } catch (error) {
-    console.error("Error saat membuat data pabrik:", error.message); // Log error ke console
-    res.status(500).json({ msg: error.message }); // Berikan respons error dengan pesan
+    console.error("Error saat membuat data pabrik:", error.message);
+    res.status(500).json({ msg: error.message });
   }
 };
+
 
 export const getValidOrderUUID = async (req, res) => {
   try {
@@ -87,13 +116,31 @@ export const getValidOrderUUID = async (req, res) => {
       });
     }
 
+    // Ambil total berat diterima dari tabel TransaksiPBK berdasarkan userId
+    const totalBeratDiterima = await TransaksiPBK.sum("beratTotalDiterima", {
+      where: { userId: req.userId },
+    });
+
+    // Ambil total produksi harian dari tabel PabrikProduksi berdasarkan userId
+    const totalProduksiHarian = await Pabrikproduksi.sum("jumlahproduksiharian", {
+      where: { userId: req.userId },
+    });
+
+    // Hitung sisa berat yang masih tersedia
+    const sisaBerat = (totalBeratDiterima || 0) - (totalProduksiHarian || 0);
+
+    // Jika sisa berat sudah 0 atau kurang, tidak menampilkan UUID
+    if (sisaBerat <= 0) {
+      return res.status(200).json([]); // Kirim array kosong jika kapasitas sudah habis
+    }
+
     // Ambil order yang sesuai dengan kondisi
     const orders = await OrderPemanen.findAll({
-      attributes: ['uuid'],
+      attributes: ["uuid"],
       where: {
         namaPabrik: req.name, // Hanya order untuk pabrik ini
-        statusorder: "order selesai" // Hanya order yang sudah selesai
-      }
+        statusorder: "order selesai", // Hanya order yang sudah selesai
+      },
     });
 
     if (!orders.length) {
@@ -101,7 +148,7 @@ export const getValidOrderUUID = async (req, res) => {
     }
 
     // Mengambil hanya UUID yang valid
-    const orderUUIDs = orders.map(order => order.uuid);
+    const orderUUIDs = orders.map((order) => order.uuid);
 
     res.status(200).json(orderUUIDs);
   } catch (error) {

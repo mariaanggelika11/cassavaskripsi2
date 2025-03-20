@@ -10,6 +10,7 @@ import Dasarpetani from "../models/DasarPetani.js";
 import TransaksiPBK from "../models/TransaksiPabrik.js";
 import limbahpetani from "../models/LimbahPetani.js";
 import Pabrik from "../models/DasarPabrik.js";
+import Pabrikproduksi from "../models/ProduksiHarianPBK.js";
 import TransaksiLogistik from "../models/TransaksiLogistik.js"; // Model transaksi logistik
 import { Op } from "sequelize"; // Import operator Sequelize
 import Sequelize from "../config/Database.js";
@@ -86,6 +87,12 @@ export const getOrderMasuk = async (req, res) => {
         where: {
           [Op.or]: [{ namaPerusahaan: null }, { emailPerusahaan: null }],
         },
+        include: [
+          {
+            model: User,
+            attributes: ["name", "email"],
+          },
+        ]
       });
 
       const filteredProductData = productData.filter(product => {
@@ -198,6 +205,11 @@ export const getOrderMasuk = async (req, res) => {
             { emailLogistik: null },
           ],
         },
+        include: [
+          {
+            model: User,
+            attributes: ["name", "email"],
+          },]
       });
     } else {
       // Role tidak valid
@@ -678,390 +690,148 @@ const formattedResponse = response.map((item) => {
      }
    };
 
-export const getHistoryOrder = async (req, res) => {
-  try {
-    let response;
-
-    // Periksa role pengguna
-    if (req.role === "logistik") {
-      response = await Product.findAll({
-        attributes: [
-          "uuid",
-          "idTanam",
-          "idLahan",
-          "tanggalPemanenan",
-          "statusOrder",
-          "varietasSingkong",
-          "estimasiBerat",
-          "estimasiHarga",
-          "namaPerusahaan",
-          "emailPerusahaan",
-          "namaLogistik",
-          "emailLogistik",
-          "namaPabrik",
-          "emailPabrik",
-        ],
-        where: {
-          namaLogistik: req.name,
-          emailLogistik: req.email,
-          statusOrder: {
-            [Op.eq]: "order selesai", // Tidak mengambil data dengan status selesai
-          },
+   export const getHistoryOrder = async (req, res) => {
+    try {
+      let response;
+  
+      // Atribut umum untuk semua peran
+      const commonAttributes = [
+        "uuid",
+        "idTanam",
+        "idLahan",
+        "tanggalPemanenan",
+        "statusOrder",
+        "varietasSingkong",
+        "estimasiBerat",
+        "estimasiHarga",
+        "namaPerusahaan",
+        "emailPerusahaan",
+        "namaLogistik",
+        "emailLogistik",
+        "namaPabrik",
+        "emailPabrik",
+      ];
+  
+      // Struktur include umum untuk semua peran
+      const commonInclude = [
+        {
+          model: User,
+          attributes: ["name", "email"],
         },
-        include: [
-          {
-            model: User,
-            attributes: ["name", "email"],
+        {
+          model: Logistik,
+          attributes: [
+            "orderPemanenUuid",
+            "idKendaraan",
+            "tanggalPengiriman",
+            "waktuPengiriman",
+            "estimasiWaktuTiba",
+            "aktualWaktuTiba",
+            "catatanEfisiensiRute",
+            "biayaTransportasi",
+            "kondisiPengiriman",
+            "catatanDariPenerima",
+          ],
+          required: false,
+          where: {
+            [Op.or]: [
+              { orderPemanenUuid: { [Op.ne]: null } },
+              { idKendaraan: { [Op.ne]: null } },
+              { tanggalPengiriman: { [Op.ne]: null } },
+              { waktuPengiriman: { [Op.ne]: null } },
+              { estimasiWaktuTiba: { [Op.ne]: null } },
+            ],
           },
-          {
-            model: Logistik,
-        attributes: [
-          "orderPemanenUuid",
-          "idKendaraan",
-          "tanggalPengiriman",
-          "waktuPengiriman",
-          "estimasiWaktuTiba",
-          // Kolom berikut akan muncul tetapi bernilai null jika belum diisi
-          "aktualWaktuTiba",
-          "catatanEfisiensiRute",
-          "biayaTransportasi",
-          "kondisiPengiriman",
-          "catatanDariPenerima",
-        ],
-        required: false, // Tidak memaksa adanya relasi
-        where: {
-          [Op.or]: [
-            { orderPemanenUuid: { [Op.ne]: null } },
-            { idKendaraan: { [Op.ne]: null } },
-            { tanggalPengiriman: { [Op.ne]: null } },
-            { waktuPengiriman: { [Op.ne]: null } },
-            { estimasiWaktuTiba: { [Op.ne]: null } },
+          order: [
+            ["orderPemanenUuid", "ASC"],
+            ["idKendaraan", "ASC"],
           ],
         },
-      },
-    ],
-  });
-}  else if (req.role === "perusahaan") {
+        {
+          model: TransaksiPR,
+          attributes: ["orderPemanenUuid", "hargaaktual", "catatanharga", "tanggalselesai"],
+          required: false,
+        },
+        {
+          model: TransaksiPBK,
+          attributes: ["orderPemanenUuid", "tanggalPenerimaan", "beratTotalDiterima", "catatanKualitas", "evaluasiKualitas"],
+          required: false,
+        },
+        {
+          model: limbahpetani,
+          attributes: [
+            "beratLimbahBatang",
+            "catatanLimbahBatang",
+            "beratLimbahDaun",
+            "catatanLimbahDaun",
+            "beratLimbahAkar",
+            "catatanLimbahAkar",
+          ],
+          required: false,
+        },
+      ];
+  
+      // Menentukan kondisi query berdasarkan peran pengguna
+      const whereCondition = {
+        statusOrder: {
+          [Op.eq]: "order selesai",
+        },
+      };
+  
+      if (req.role === "logistik") {
+        whereCondition.namaLogistik = req.name;
+        whereCondition.emailLogistik = req.email;
+      } else if (req.role === "perusahaan") {
+        whereCondition.namaPerusahaan = req.name;
+        whereCondition.emailPerusahaan = req.email;
+      } else if (req.role === "pabrik") {
+        whereCondition.namaPabrik = req.name;
+        whereCondition.emailPabrik = req.email;
+      } else if (req.role === "petani") {
+        whereCondition.userId = req.userId;
+      } else if (req.role === "admin") {
+        // Admin dapat melihat semua pesanan dengan status "order selesai"
+      } else {
+        return res.status(403).json({ msg: "Role tidak valid atau tidak memiliki akses." });
+      }
+  
+      // Eksekusi query
       response = await Product.findAll({
-        attributes: [
-          "uuid",
-          "idTanam",
-          "idLahan",
-          "tanggalPemanenan",
-          "statusOrder",
-          "varietasSingkong",
-          "estimasiBerat",
-          "estimasiHarga",
-          "namaPerusahaan",
-          "emailPerusahaan",
-          "namaLogistik",
-          "emailLogistik",
-          "namaPabrik",
-          "emailPabrik",
-        ],
-        where: {
-          namaPerusahaan: req.name,
-          emailPerusahaan: req.email,
-          statusOrder: {
-            [Op.eq]: "order selesai",
-          },
-        },
-        include: [
-          {
-            model: User,
-            attributes: ["name", "email"],
-          },
-          {
-            model: Logistik,
-            attributes: [
-              "orderPemanenUuid",
-              "idKendaraan",
-              "tanggalPengiriman",
-              "waktuPengiriman",
-              "estimasiWaktuTiba",
-              "aktualWaktuTiba",
-              "catatanEfisiensiRute",
-              "biayaTransportasi",
-              "kondisiPengiriman",
-              "catatanDariPenerima",
-            ],
-            required: false, // Tidak memaksa adanya relasi
-            where: {
-              [Op.or]: [
-                { orderPemanenUuid: { [Op.ne]: null } },
-                { idKendaraan: { [Op.ne]: null } },
-                { tanggalPengiriman: { [Op.ne]: null } },
-                { waktuPengiriman: { [Op.ne]: null } },
-                { estimasiWaktuTiba: { [Op.ne]: null } },
-              ],
-            },
-            order: [
-              ["orderPemanenUuid", "ASC"], // Urutkan berdasarkan orderPemanenUuid
-              ["idKendaraan", "ASC"], // Jika diperlukan, urutkan juga berdasarkan idKendaraan
-            ],
-          },
-          {
-            model: TransaksiPR,
-            attributes: ["orderPemanenUuid", "hargaaktual", "catatanharga", "tanggalselesai"],
-            required: false,
-          },
-          {
-            model: TransaksiPBK,
-            attributes: ["orderPemanenUuid", "tanggalPenerimaan", "beratTotalDiterima", "catatanKualitas", "evaluasiKualitas"],
-            required: false,
-          },
-          {
-            model: limbahpetani,
-            attributes: [
-              "beratLimbahBatang",
-              "catatanLimbahBatang",
-              "beratLimbahDaun",
-              "catatanLimbahDaun",
-              "beratLimbahAkar",
-              "catatanLimbahAkar",
-            ],
-            required: false,
-          },
-        ],
+        attributes: commonAttributes,
+        where: whereCondition,
+        include: commonInclude,
       });
-    } else if (req.role === "pabrik") {
-      response = await Product.findAll({
-        attributes: [
-          "uuid",
-          "idTanam",
-          "idLahan",
-          "tanggalPemanenan",
-          "statusOrder",
-          "varietasSingkong",
-          "estimasiBerat",
-          "estimasiHarga",
-          "namaPerusahaan",
-          "emailPerusahaan",
-          "namaLogistik",
-          "emailLogistik",
-          "namaPabrik",
-          "emailPabrik",
-        ],
-        where: {
-          namaPabrik: req.name,
-          emailPabrik: req.email,
-          statusOrder: {
-            [Op.eq]: "order selesai",
-          },
-        },
-        include: [
-          {
-            model: User,
-            attributes: ["name", "email"],
-          },
-          {
-            model: TransaksiPBK,
-            attributes: ["orderPemanenUuid", "tanggalPenerimaan", "beratTotalDiterima", "catatanKualitas", "evaluasiKualitas"],
-            required: false,
-          },
-        ],
+  
+      // Format data untuk respons
+      const formatNumber = (value) => value ? parseInt(value).toLocaleString("id-ID") : "-";
+      const formatFloat = (value) => value ? parseFloat(value).toLocaleString("id-ID") : "-";
+  
+      const formattedResponse = response.map((item) => {
+        if (item.Logistik) {
+          item.Logistik.biayaTransportasi = formatNumber(item.Logistik.biayaTransportasi);
+        }
+        item.estimasiHarga = formatNumber(item.estimasiHarga);
+        item.estimasiBerat = formatFloat(item.estimasiBerat);
+  
+        if (item.TransaksiPR) {
+          item.TransaksiPR.hargaaktual = formatNumber(item.TransaksiPR.hargaaktual);
+        }
+  
+        if (item.limbahpetani) {
+          item.limbahpetani.beratLimbahBatang = formatFloat(item.limbahpetani.beratLimbahBatang);
+          item.limbahpetani.beratLimbahDaun = formatFloat(item.limbahpetani.beratLimbahDaun);
+          item.limbahpetani.beratLimbahAkar = formatFloat(item.limbahpetani.beratLimbahAkar);
+        }
+  
+        return item;
       });
-    } else if (req.role === "petani") {
-      response = await Product.findAll({
-        attributes: [
-          "uuid",
-          "idTanam",
-          "idLahan",
-          "tanggalPemanenan",
-          "statusOrder",
-          "varietasSingkong",
-          "estimasiBerat",
-          "estimasiHarga",
-          "namaPerusahaan",
-          "emailPerusahaan",
-          "namaLogistik",
-          "emailLogistik",
-          "namaPabrik",
-          "emailPabrik",
-        ],
-        where: {
-          userId: req.userId,
-          statusOrder: {
-            [Op.eq]: "order selesai",
-          },
-        },
-        include: [
-          {
-            model: User,
-            attributes: ["name", "email"],
-          },
-          {
-            model: Logistik,
-            attributes: [
-              "orderPemanenUuid",
-              "idKendaraan",
-              "tanggalPengiriman",
-              "waktuPengiriman",
-              "estimasiWaktuTiba",
-              "aktualWaktuTiba",
-              "catatanEfisiensiRute",
-              "biayaTransportasi",
-              "kondisiPengiriman",
-              "catatanDariPenerima",
-            ],
-            required: false, // Tidak memaksa adanya relasi
-            where: {
-              [Op.or]: [
-                { orderPemanenUuid: { [Op.ne]: null } },
-                { idKendaraan: { [Op.ne]: null } },
-                { tanggalPengiriman: { [Op.ne]: null } },
-                { waktuPengiriman: { [Op.ne]: null } },
-                { estimasiWaktuTiba: { [Op.ne]: null } },
-              ],
-        },
-        order: [
-          ["orderPemanenUuid", "ASC"], // Urutkan berdasarkan orderPemanenUuid
-          ["idKendaraan", "ASC"], // Jika diperlukan, urutkan juga berdasarkan idKendaraan
-        ],
-      },
-      {
-            model: TransaksiPR,
-            attributes: ["orderPemanenUuid", "hargaaktual", "catatanharga", "tanggalselesai"],
-            required: false,
-          },
-          {
-            model: TransaksiPBK,
-            attributes: ["orderPemanenUuid", "tanggalPenerimaan", "beratTotalDiterima", "catatanKualitas", "evaluasiKualitas"],
-            required: false,
-          },
-          {
-            model: limbahpetani,
-            attributes: [
-              "beratLimbahBatang",
-              "catatanLimbahBatang",
-              "beratLimbahDaun",
-              "catatanLimbahDaun",
-              "beratLimbahAkar",
-              "catatanLimbahAkar",
-            ],
-            required: false,
-          },
-        ],
-      });
-    } else if (req.role === "admin") {
-      response = await Product.findAll({
-        attributes: [
-          "uuid",
-          "idTanam",
-          "idLahan",
-          "tanggalPemanenan",
-          "statusOrder",
-          "varietasSingkong",
-          "estimasiBerat",
-          "estimasiHarga",
-          "namaLogistik",
-          "emailLogistik",
-          "namaPabrik",
-          "emailPabrik",
-          "namaPerusahaan",
-          "emailPerusahaan",
-        ],
-        where: {
-          statusOrder: {
-            [Op.eq]: "order selesai", // Semua data dengan status selain selesai
-          },
-        },
-        include: [
-          {
-            model: User,
-            attributes: ["name", "email"],
-          },
-          {
-            model: Logistik,
-            attributes: [
-              "orderPemanenUuid",
-              "idKendaraan",
-              "tanggalPengiriman",
-              "waktuPengiriman",
-              "estimasiWaktuTiba",
-              "aktualWaktuTiba",
-              "catatanEfisiensiRute",
-              "biayaTransportasi",
-              "kondisiPengiriman",
-              "catatanDariPenerima",
-            ],
-            required: false, // Tidak memaksa adanya relasi
-            where: {
-              [Op.or]: [
-                { orderPemanenUuid: { [Op.ne]: null } },
-                { idKendaraan: { [Op.ne]: null } },
-                { tanggalPengiriman: { [Op.ne]: null } },
-                { waktuPengiriman: { [Op.ne]: null } },
-                { estimasiWaktuTiba: { [Op.ne]: null } },
-              ],
-        },
-        order: [
-          ["orderPemanenUuid", "ASC"], // Urutkan berdasarkan orderPemanenUuid
-          ["idKendaraan", "ASC"], // Jika diperlukan, urutkan juga berdasarkan idKendaraan
-        ],
-      },
-      {
-            model: TransaksiPR,
-            attributes: ["orderPemanenUuid", "hargaaktual", "catatanharga", "tanggalselesai"],
-            required: false,
-          },
-          {
-            model: TransaksiPBK,
-            attributes: ["orderPemanenUuid", "tanggalPenerimaan", "beratTotalDiterima", "catatanKualitas", "evaluasiKualitas"],
-            required: false,
-          },
-          {
-            model: limbahpetani,
-            attributes: [
-              "beratLimbahBatang",
-              "catatanLimbahBatang",
-              "beratLimbahDaun",
-              "catatanLimbahDaun",
-              "beratLimbahAkar",
-              "catatanLimbahAkar",
-            ],
-            required: false,
-          },
-        ],
-      });
-    } else {
-      // Role tidak valid
-      return res.status(403).json({ msg: "Role tidak valid atau tidak memiliki akses." });
+  
+      // Kirimkan respons yang telah diformat
+      res.status(200).json(formattedResponse);
+    } catch (error) {
+      res.status(500).json({ msg: error.message });
     }
-
-    // Format data untuk biaya transportasi, estimasi harga, berat, dan limbah
-const formatNumber = (value) => value ? parseInt(value).toLocaleString("id-ID") : "-";
-const formatFloat = (value) => value ? parseFloat(value).toLocaleString("id-ID") : "-";
-
-const formattedResponse = response.map((item) => {
-  // Format biaya transportasi, estimasi harga, estimasi berat
-  if (item.Logistik) {
-    item.Logistik.biayaTransportasi = formatNumber(item.Logistik.biayaTransportasi);
-  }
-  item.estimasiHarga = formatNumber(item.estimasiHarga);
-  item.estimasiBerat = formatFloat(item.estimasiBerat);
-
-  if (item.TransaksiPR) {
-    item.TransaksiPR.hargaaktual = formatNumber(item.TransaksiPR.hargaaktual);
-  }
-
-  // Format berat limbah (jika ada limbah petani)
-  if (item.limbahpetani) {
-    item.limbahpetani.beratLimbahBatang = formatFloat(item.limbahpetani.beratLimbahBatang);
-    item.limbahpetani.beratLimbahDaun = formatFloat(item.limbahpetani.beratLimbahDaun);
-    item.limbahpetani.beratLimbahAkar = formatFloat(item.limbahpetani.beratLimbahAkar);
-  }
-
-  return item;
-});
-
-
-    // Kirimkan respons dengan data yang diformat
-    res.status(200).json(formattedResponse);
-  } catch (error) {
-    res.status(500).json({ msg: error.message });
-  }
-};
+  };
 
 
 export const getHistoryOrderPdf = async (req, res) => {
@@ -1472,26 +1242,37 @@ const formatWeight = (value) => value ? `${parseFloat(value).toLocaleString("id-
 
 
 export const createProduct = async (req, res) => {
-  const { idTanam, tanggalPemanenan, statusOrder, varietasSingkong, estimasiBerat } = req.body;
+  const { idTanam, statusOrder, varietasSingkong, estimasiBerat } = req.body;
 
-  // Validasi input idTanam
   if (!idTanam) {
     return res.status(400).json({ msg: "ID Rencana Tanam harus diisi." });
   }
 
   try {
-    // Cek apakah idTanam valid pada database Petani
     const tanam = await Petani.findOne({ where: { idtanam: idTanam } });
     if (!tanam) {
       return res.status(404).json({ msg: "ID Tanam tidak ditemukan di database Petani." });
     }
 
-    // Cek apakah userId pada idTanam cocok dengan req.userId
     if (tanam.userId !== req.userId) {
       return res.status(403).json({ msg: "Anda tidak memiliki akses untuk menggunakan ID Tanam ini." });
     }
 
-    // Ambil data harga terbaru dari database Perusahaan
+    const today = new Date();
+    const rencanaPanenDate = new Date(tanam.tanggalRencanaPanen);
+    const minDate = new Date(rencanaPanenDate);
+    minDate.setDate(rencanaPanenDate.getDate() - 7);
+    const maxDate = new Date(rencanaPanenDate);
+    maxDate.setDate(rencanaPanenDate.getDate() + 7);
+
+    if (today < minDate) {
+      return res.status(400).json({ msg: "Order pemanenan tidak dapat dilakukan sebelum H-7 dari tanggal rencana panen." });
+    }
+
+    if (today > maxDate) {
+      return res.status(400).json({ msg: "Order pemanenan tidak dapat dilakukan setelah H+7 dari tanggal rencana panen." });
+    }
+
     const perusahaanData = await Perusahaan.findOne({
       order: [['tanggalupdateharga', 'DESC']],
       limit: 1,
@@ -1502,7 +1283,6 @@ export const createProduct = async (req, res) => {
       return res.status(400).json({ msg: "Data harga tidak ditemukan." });
     }
 
-    // Validasi varietas singkong dan hitung harga
     let hargaGrade;
     if (varietasSingkong === "Grade A") {
       hargaGrade = perusahaanData.hargaGradeA || 0;
@@ -1515,15 +1295,12 @@ export const createProduct = async (req, res) => {
     }
 
     const estimasiHarga = estimasiBerat * hargaGrade;
-
-    // Ambil idLahan dari data Petani berdasarkan idTanam
     const idLahan = tanam.idlahan;
 
-    // Buat produk baru pada database Product
     const newProduct = await Product.create({
       idTanam: tanam.idtanam,
-      idLahan, // Menyimpan idLahan yang terkait
-      tanggalPemanenan,
+      idLahan,
+      tanggalPemanenan: tanam.tanggalRencanaPanen, // Mengambil langsung dari database
       statusOrder: statusOrder || "pending",
       varietasSingkong,
       estimasiBerat,
@@ -1531,35 +1308,22 @@ export const createProduct = async (req, res) => {
       userId: req.userId,
     });
 
-    // Format estimasi harga ke format dengan titik sebagai pemisah ribuan
-    const formattedEstimasiHarga = newProduct.estimasiHarga.toLocaleString('id-ID', {
-      minimumFractionDigits: 0, // Tanpa desimal
-      maximumFractionDigits: 0,
-    });
-
-    // Format estimasi berat ke format dengan titik sebagai pemisah ribuan
-    const formattedEstimasiBerat = newProduct.estimasiBerat.toLocaleString('id-ID', {
-      minimumFractionDigits: 0, // Tanpa desimal
-      maximumFractionDigits: 0,
-    });
-
-    // Kirim respon
     res.status(201).json({
       msg: "Order Pemanenan Created Successfully",
       orderPemanenan: {
         uuid: newProduct.uuid,
         idTanam: newProduct.idTanam,
-        idLahan: newProduct.idLahan, // Sertakan idLahan dalam respon
+        idLahan: newProduct.idLahan,
         tanggalPemanenan: newProduct.tanggalPemanenan,
         statusOrder: newProduct.statusOrder,
         varietasSingkong: newProduct.varietasSingkong,
-        estimasiBerat: formattedEstimasiBerat,
-        estimasiHarga: formattedEstimasiHarga,
+        estimasiBerat: newProduct.estimasiBerat.toLocaleString('id-ID'),
+        estimasiHarga: newProduct.estimasiHarga.toLocaleString('id-ID'),
         userId: newProduct.userId,
       },
       tanamInfo: {
         idTanam: tanam.idtanam,
-        idLahan: tanam.idlahan, // Sertakan idLahan dalam informasi tanam
+        idLahan: tanam.idlahan,
         userId: tanam.userId,
         kategoriLahan: tanam.kategoriLahan,
         lokasiLahan: tanam.lokasiLahan,
@@ -1572,6 +1336,8 @@ export const createProduct = async (req, res) => {
     res.status(500).json({ msg: error.message });
   }
 };
+
+
 
 
 
@@ -1630,46 +1396,52 @@ export const approveOrder = async (req, res) => {
       }
 
       // Ambil data kapasitas RAM pabrik berdasarkan data login
-      const pabrikData = await Pabrik.findOne({
-        attributes: ["kapasitasram"],
-        where: { userId: req.userId },
-      });
+const pabrikData = await Pabrik.findOne({
+  attributes: ["kapasitasram"],
+  where: { userId: req.userId },
+});
 
-      if (!pabrikData) {
-        return res.status(404).json({ msg: "Data pabrik tidak ditemukan untuk pengguna yang login." });
-      }
+if (!pabrikData) {
+  return res.status(404).json({ msg: "Data pabrik tidak ditemukan untuk pengguna yang login." });
+}
 
-      const kapasitasram = pabrikData.kapasitasram;
+const kapasitasram = pabrikData.kapasitasram;
 
-      // Hitung total berat diterima dari database Product
-      const totalBeratDiterima = await TransaksiPBK.sum("beratTotalDiterima", {
-        where: {
-          userId: req.userId
-        },
-      });
+// Hitung total berat diterima dari database TransaksiPBK
+const totalBeratDiterima = await TransaksiPBK.sum("beratTotalDiterima", {
+  where: { userId: req.userId },
+});
 
-      // Validasi apakah kapasitas RAM mencukupi
-      if (pabrik === true) {
-        if (kapasitasram < totalBeratDiterima) {
-          return res.status(400).json({
-            msg: `Kapasitas RAM (${kapasitasram}) tidak mencukupi untuk total berat diterima (${totalBeratDiterima}). Tidak dapat menyetujui.`,
-          });
-        }
+// Hitung total produksi dari PabrikProduksi berdasarkan userId
+const totalProduksi = await Pabrikproduksi.sum("jumlahproduksiharian", {
+  where: { userId: req.userId },
+});
 
-        updatedStatus = "Perusahaan dan Pabrik Menyetujui, menunggu logistik";
-        updatedFields = { 
-          statusOrder: updatedStatus, 
-          namaPabrik: req.name, 
-          emailPabrik: req.email 
-        };
-      } else if (pabrik === false) {
-        updatedStatus = "ditolak untuk panen";
-        updatedFields = { 
-          statusOrder: updatedStatus, 
-          namaPabrik: req.name, 
-          emailPabrik: req.email 
-        };
-      }
+// Kurangi total berat diterima dengan total produksi
+const totalSetelahProduksi = totalBeratDiterima - (totalProduksi || 0);
+
+// Validasi apakah kapasitas RAM mencukupi
+if (pabrik === true) {
+  if (kapasitasram < totalSetelahProduksi) {
+    return res.status(400).json({
+      msg: `Kapasitas RAM (${kapasitasram}) tidak mencukupi untuk total berat diterima (${totalSetelahProduksi}). Tidak dapat menyetujui.`,
+    });
+  }
+
+  updatedStatus = "Perusahaan dan Pabrik Menyetujui, menunggu logistik";
+  updatedFields = { 
+    statusOrder: updatedStatus, 
+    namaPabrik: req.name, 
+    emailPabrik: req.email 
+  };
+} else if (pabrik === false) {
+  updatedStatus = "ditolak untuk panen";
+  updatedFields = { 
+    statusOrder: updatedStatus, 
+    namaPabrik: req.name, 
+    emailPabrik: req.email 
+  };
+}
     }
 
 // Logistik menyetujui atau menolak
