@@ -1824,7 +1824,7 @@ if (!existingLimbahPetani) {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-
+      
       return res.status(200).json({
         msg: "Data limbah berhasil dicatat.",
         limbahPetani: limbahPetani.dataValues,
